@@ -1,11 +1,14 @@
 // ** React Imports
-import { Fragment, useState, forwardRef, useEffect } from "react";
-import axios from "axios";
+import { Fragment, useState, forwardRef, useEffect, useCallback } from "react";
+
+// ** Utils
+import { __API } from "../../../../utility/Utils";
 
 // ** Add New Modal Component
-import AddNewModal from "./AddNew";
+import UserForm from "../../../ui-elements/forms/UserForm";
 
 // ** Third Party Components
+import axios from "axios";
 import ReactPaginate from "react-paginate";
 import DataTable from "react-data-table-component";
 import {
@@ -33,6 +36,7 @@ import {
 	DropdownItem,
 	DropdownToggle,
 	UncontrolledButtonDropdown,
+	Spinner,
 } from "reactstrap";
 
 // ** Bootstrap Checkbox Component
@@ -49,6 +53,10 @@ const UserAllApps = () => {
 	const [searchValue, setSearchValue] = useState("");
 	const [filteredData, setFilteredData] = useState([]);
 	const [dataUser, setDataUser] = useState([]);
+	const [selectedRow, setSelectedRow] = useState([]);
+	const [isRowSelected, setIsRowSelected] = useState(false);
+	const [type, setType] = useState("");
+	const [isFetching, setIsFetching] = useState(false);
 
 	const columns = [
 		{
@@ -56,12 +64,19 @@ const UserAllApps = () => {
 			maxWidth: "130px",
 			selector: (row) => row.nik,
 			sortable: (row) => row.nik,
+			style: {
+				fontWeight: "bold",
+			},
 		},
 		{
 			name: "Username",
 			minWidth: "270px",
 			selector: (row) => row.username,
 			sortable: (row) => row.username,
+			wrap: true,
+			style: {
+				fontWeight: "bold",
+			},
 		},
 		{
 			name: "User AD",
@@ -77,21 +92,22 @@ const UserAllApps = () => {
 		},
 		{
 			name: "Email Kantor",
-			minWidth: "250px",
+			minWidth: "275px",
 			selector: (row) => row.email,
 			sortable: (row) => row.email,
 		},
 		{
 			name: "Status",
-			width: "100px",
+			width: "95px",
 			selector: (row) => row.status,
 			sortable: (row) => row.status,
 		},
 	];
 
 	const fetchData = async () => {
+		setIsFetching(true);
 		await axios
-			.post("https://localhost:44309/api/data", {
+			.post(__API, {
 				Option: "GET ALL USER DATA",
 			})
 			.then((res) => {
@@ -102,6 +118,7 @@ const UserAllApps = () => {
 					};
 				});
 				setDataUser(data);
+				setIsFetching(false);
 			});
 	};
 
@@ -109,8 +126,26 @@ const UserAllApps = () => {
 		fetchData();
 	}, []);
 
+	const selectRowHandler = useCallback((state) => {
+		setSelectedRow(state.selectedRows);
+
+		state.selectedRows.length === 1
+			? setIsRowSelected(true)
+			: setIsRowSelected(false);
+
+		console.log(state.selectedRows.length);
+		console.log(state.selectedRows);
+	}, []);
+
+	useEffect(() => {
+		console.log(selectedRow);
+	}, [selectedRow]);
+
 	// ** Function to handle Modal toggle
-	const handleModal = () => setModal(!modal);
+	const handleModal = (e) => {
+		setModal(!modal);
+		setType(e.target.id);
+	};
 
 	// ** Function to handle filter
 	const handleFilter = (e) => {
@@ -222,102 +257,134 @@ const UserAllApps = () => {
 
 	return (
 		<Fragment>
-			<Card>
-				<CardHeader className="flex-md-row flex-column align-md-items-center align-items-start border-bottom">
-					<CardTitle tag="h4">Master User All Apps</CardTitle>
-					<div className="d-flex mt-md-0 mt-1">
-						<UncontrolledButtonDropdown>
-							<DropdownToggle color="secondary" caret outline>
-								<Share size={15} />
-								<span className="align-middle ms-50">
-									Export
+			<div className="vw-100">
+				<Card>
+					<CardHeader className="flex-md-row flex-column align-md-items-center align-items-start border-bottom">
+						<CardTitle tag="h4">Master User All Apps</CardTitle>
+						<div className="d-flex mt-md-0 mt-1">
+							<UncontrolledButtonDropdown>
+								<DropdownToggle color="secondary" caret outline>
+									<Share size={15} />
+									<span className="align-middle ms-50">
+										Export
+									</span>
+								</DropdownToggle>
+								<DropdownMenu>
+									<DropdownItem className="w-100">
+										<Printer size={15} />
+										<span className="align-middle ms-50">
+											Print
+										</span>
+									</DropdownItem>
+									<DropdownItem
+										className="w-100"
+										onClick={() => downloadCSV(data)}
+									>
+										<FileText size={15} />
+										<span className="align-middle ms-50">
+											CSV
+										</span>
+									</DropdownItem>
+									<DropdownItem className="w-100">
+										<Grid size={15} />
+										<span className="align-middle ms-50">
+											Excel
+										</span>
+									</DropdownItem>
+									<DropdownItem className="w-100">
+										<File size={15} />
+										<span className="align-middle ms-50">
+											PDF
+										</span>
+									</DropdownItem>
+									<DropdownItem className="w-100">
+										<Copy size={15} />
+										<span className="align-middle ms-50">
+											Copy
+										</span>
+									</DropdownItem>
+								</DropdownMenu>
+							</UncontrolledButtonDropdown>
+							<Button
+								className="ms-2"
+								id="add"
+								color="primary"
+								onClick={handleModal}
+							>
+								<Plus size={15} id="add" />
+								<span className="align-middle ms-50" id="add">
+									Add Record
 								</span>
-							</DropdownToggle>
-							<DropdownMenu>
-								<DropdownItem className="w-100">
-									<Printer size={15} />
-									<span className="align-middle ms-50">
-										Print
-									</span>
-								</DropdownItem>
-								<DropdownItem
-									className="w-100"
-									onClick={() => downloadCSV(data)}
-								>
-									<FileText size={15} />
-									<span className="align-middle ms-50">
-										CSV
-									</span>
-								</DropdownItem>
-								<DropdownItem className="w-100">
-									<Grid size={15} />
-									<span className="align-middle ms-50">
-										Excel
-									</span>
-								</DropdownItem>
-								<DropdownItem className="w-100">
-									<File size={15} />
-									<span className="align-middle ms-50">
-										PDF
-									</span>
-								</DropdownItem>
-								<DropdownItem className="w-100">
-									<Copy size={15} />
-									<span className="align-middle ms-50">
-										Copy
-									</span>
-								</DropdownItem>
-							</DropdownMenu>
-						</UncontrolledButtonDropdown>
-						<Button
-							className="ms-2"
-							color="primary"
-							onClick={handleModal}
+							</Button>
+						</div>
+					</CardHeader>
+					<Row className="justify-content-between mx-0">
+						<Col
+							className="d-flex align-items-center justify-content-start"
+							md="6"
+							sm="12"
 						>
-							<Plus size={15} />
-							<span className="align-middle ms-50">
-								Add Record
-							</span>
-						</Button>
-					</div>
-				</CardHeader>
-				<Row className="justify-content-end mx-0">
-					<Col
-						className="d-flex align-items-center justify-content-end mt-1"
-						md="6"
-						sm="12"
-					>
-						<Label className="me-1" for="search-input">
-							Search
-						</Label>
-						<Input
-							className="dataTable-filter mb-50"
-							type="text"
-							bsSize="sm"
-							id="search-input"
-							value={searchValue}
-							onChange={handleFilter}
+							<Button
+								color={isRowSelected ? "warning" : "secondary"}
+								className="me-1"
+								id="edit"
+								disabled={!isRowSelected}
+								onClick={handleModal}
+							>
+								Edit
+							</Button>{" "}
+							{"  "}
+							<Button
+								color={isRowSelected ? "info" : "secondary"}
+								id="details"
+								disabled={!isRowSelected}
+								onClick={handleModal}
+							>
+								Details
+							</Button>
+						</Col>
+						<Col
+							className="d-flex align-items-center justify-content-end mt-1"
+							md="6"
+							sm="12"
+						>
+							<Label className="me-1" for="search-input">
+								Search
+							</Label>
+							<Input
+								className="dataTable-filter mb-50"
+								type="text"
+								bsSize="sm"
+								id="search-input"
+								value={searchValue}
+								onChange={handleFilter}
+							/>
+						</Col>
+					</Row>
+					<div className="react-dataTable react-dataTable-selectable-rows">
+						<DataTable
+							noHeader
+							pagination
+							selectableRows
+							onSelectedRowsChange={selectRowHandler}
+							columns={columns}
+							paginationPerPage={6}
+							className="react-dataTable"
+							sortIcon={<ChevronDown size={10} />}
+							persistTableHead
+							// paginationComponent={CustomPagination}
+							// paginationDefaultPage={currentPage + 1}
+							selectableRowsComponent={BootstrapCheckbox}
+							data={searchValue.length ? filteredData : dataUser}
+							progressPending={isFetching}
+							progressComponent={
+								<Spinner className="m-5" color="primary" />
+							}
 						/>
-					</Col>
-				</Row>
-				<div className="react-dataTable react-dataTable-selectable-rows">
-					<DataTable
-						noHeader
-						pagination
-						selectableRows
-						columns={columns}
-						paginationPerPage={6}
-						className="react-dataTable"
-						sortIcon={<ChevronDown size={10} />}
-						// paginationComponent={CustomPagination}
-						// paginationDefaultPage={currentPage + 1}
-						selectableRowsComponent={BootstrapCheckbox}
-						data={searchValue.length ? filteredData : dataUser}
-						// data={!!dataUser ? dataUser : []}
-					/>
-				</div>
-			</Card>
-			<AddNewModal open={modal} handleModal={handleModal} />
+					</div>
+				</Card>
+			</div>
+			<UserForm open={modal} handleModal={handleModal} type={type} />
 		</Fragment>
 	);
 };

@@ -1,11 +1,14 @@
 // ** React Imports
 import { Fragment, useState, forwardRef, useEffect } from "react";
-import axios from "axios";
+
+// ** Import Utils
+import { formatDate } from "../../../../utility/Utils";
 
 // ** Add New Modal Component
 import AddNewModal from "../user/AddNew";
 
 // ** Third Party Components
+import axios from "axios";
 import ReactPaginate from "react-paginate";
 import DataTable from "react-data-table-component";
 import {
@@ -79,6 +82,7 @@ const Application = () => {
 			width: "180px",
 			selector: (row) => row.modifdate,
 			sortable: (row) => row.modifdate,
+			format: (row) => formatDate(row.modifdate),
 		},
 		{
 			name: "Modified By",

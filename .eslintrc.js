@@ -73,7 +73,7 @@ module.exports = {
 
 		// ES6
 		"arrow-spacing": "error",
-		"no-confusing-arrow": "error",
+		"no-confusing-arrow": "off",
 		"no-duplicate-imports": "error",
 		"no-var": "error",
 		"object-shorthand": "error",
