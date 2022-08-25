@@ -27,26 +27,24 @@ import "@styles/react/libs/flatpickr/flatpickr.scss";
 
 const MySwal = withReactContent(Swal);
 const initFormState = {
-	EmpType: "Tetap",
-	NIK: "",
-	Username: "",
+	AppName: "",
+	Keterangan: "",
 	Status: 1,
-	Gender: "Male",
 };
 
-const UserForm = ({ open, handleModal, type, data }) => {
-	const nikRef = useRef();
-	const usernameRef = useRef();
+const AppForm = ({ open, handleModal, type, data }) => {
+	const appRef = useRef();
+	const ketRef = useRef();
 
-	const [userForm, setUserForm] = useState(initFormState);
+	const [appForm, setAppForm] = useState(initFormState);
 
 	let title;
-	if (type === "add") title = "Tambah User Baru";
-	else if (type === "edit") title = "Ubah Data User";
-	else if (type === "details") title = "Detail User";
+	if (type === "add") title = "Tambah Aplikasi Baru";
+	else if (type === "edit") title = "Ubah Data Aplikasi";
+	else if (type === "details") title = "Detail Aplikasi";
 
 	const formHandler = (e) => {
-		setUserForm((prevState) => ({
+		setAppForm((prevState) => ({
 			...prevState,
 			[e.target.name]: e.target.value,
 		}));
@@ -54,41 +52,37 @@ const UserForm = ({ open, handleModal, type, data }) => {
 
 	useEffect(() => {
 		if (data.length === 1) {
-			setUserForm({
-				EmpType: data[0].type,
-				NIK: data[0].nik,
-				Username: data[0].username,
+			setAppForm({
+				AppName: data[0].appname,
+				Keterangan: data[0].ket,
 				Status: statusConvert(data[0].status),
-				Gender: data[0].gender,
 			});
-		} else if (data.length === 0) setUserForm(initFormState);
+		} else if (data.length === 0) setAppForm(initFormState);
 	}, [data]);
 
 	useEffect(() => {
-		console.log(userForm);
-	}, [userForm]);
+		console.log(appForm);
+	}, [appForm]);
 
 	const submitForm = async () => {
-		console.log(userForm);
+		console.log(appForm);
 		await axios
 			.post(__API, {
-				Option: "SUBMIT USER",
+				Option: "SUBMIT APP",
 				Type: type,
-				Status: userForm.Status,
-				User: {
-					EmpType: userForm.EmpType,
-					NIK: nikRef.current.value,
-					Username: usernameRef.current.value,
-					Gender: userForm.Gender,
+				Status: appForm.Status,
+				App: {
+					AppName: appRef.current.value,
+					Keterangan: ketRef.current.value,
 				},
 			})
 			.then(() => {
 				MySwal.fire({
 					title:
 						type === "add" ? (
-							<p>User berhasil ditambahkan</p>
+							<p>Aplikasi berhasil ditambahkan</p>
 						) : (
-							<p>Data user berhasil diubah</p>
+							<p>Data aplikasi berhasil diubah</p>
 						),
 					didClose: () => handleModal("reload"),
 				});
@@ -97,9 +91,9 @@ const UserForm = ({ open, handleModal, type, data }) => {
 				MySwal.fire({
 					title:
 						type === "add" ? (
-							<p>Gagal menambahkan user</p>
+							<p>Gagal menambahkan aplikasi</p>
 						) : (
-							<p>Gagal mengubah data user</p>
+							<p>Gagal mengubah data aplikasi</p>
 						),
 					didClose: () => handleModal(),
 				});
@@ -129,66 +123,46 @@ const UserForm = ({ open, handleModal, type, data }) => {
 			</ModalHeader>
 			<ModalBody className="flex-grow-1">
 				<div className="mb-1">
-					<Label className="form-label" for="type">
-						Type
-					</Label>
-					<InputGroup>
-						<InputGroupText>
-							<Briefcase size={15} />
-						</InputGroupText>
-						<Input
-							type="select"
-							id="type"
-							name="EmpType"
-							value={userForm.EmpType}
-							disabled={type === "details"}
-							onChange={formHandler}
-						>
-							<option value="Tetap">HRIS</option>
-							<option value="NON_HRIS">NON HRIS</option>
-						</Input>
-					</InputGroup>
-				</div>
-				<div className="mb-1">
 					<Label className="form-label" for="nik">
-						NIK
+						Nama Aplikasi
 					</Label>
 					<InputGroup>
 						<InputGroupText>
 							<Hash size={15} />
 						</InputGroupText>
 						<Input
-							id="nik"
-							name="nik"
-							type="number"
+							id="appname"
+							name="appname"
 							defaultValue={
-								userForm.NIK.length !== 0 ? userForm.NIK : ""
+								appForm.AppName.length !== 0
+									? appForm.AppName
+									: ""
 							}
 							disabled={type === "details"}
-							placeholder="123456789"
-							innerRef={nikRef}
+							placeholder="K2...."
+							innerRef={appRef}
 						/>
 					</InputGroup>
 				</div>
 				<div className="mb-1">
 					<Label className="form-label" for="username">
-						Username
+						Keterangan
 					</Label>
 					<InputGroup>
 						<InputGroupText>
 							<User size={15} />
 						</InputGroupText>
 						<Input
-							id="username"
-							name="username"
+							id="ket"
+							name="ket"
 							defaultValue={
-								userForm.Username.length !== 0
-									? userForm.Username
+								appForm.Keterangan.length !== 0
+									? appForm.Keterangan
 									: ""
 							}
 							disabled={type === "details"}
-							placeholder="Akip Tsaqif"
-							innerRef={usernameRef}
+							placeholder="Keterangan...."
+							innerRef={ketRef}
 						/>
 					</InputGroup>
 				</div>
@@ -204,33 +178,12 @@ const UserForm = ({ open, handleModal, type, data }) => {
 							type="select"
 							id="status"
 							name="Status"
-							value={userForm.Status}
+							value={appForm.Status}
 							disabled={type === "details"}
 							onChange={formHandler}
 						>
 							<option value="1">Active</option>
 							<option value="0">Inactive</option>
-						</Input>
-					</InputGroup>
-				</div>
-				<div className="mb-1">
-					<Label className="form-label" for="username">
-						Gender
-					</Label>
-					<InputGroup>
-						<InputGroupText>
-							<User size={15} />
-						</InputGroupText>
-						<Input
-							type="select"
-							id="gender"
-							name="Gender"
-							value={userForm.Gender}
-							disabled={type === "details"}
-							onChange={formHandler}
-						>
-							<option value="Male">Male</option>
-							<option value="Female">Female</option>
 						</Input>
 					</InputGroup>
 				</div>
@@ -253,4 +206,4 @@ const UserForm = ({ open, handleModal, type, data }) => {
 	);
 };
 
-export default UserForm;
+export default AppForm;

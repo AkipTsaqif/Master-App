@@ -1,11 +1,14 @@
 // ** React Imports
-import { Fragment, useState, forwardRef, useEffect } from "react";
-import axios from "axios";
+import { Fragment, useState, forwardRef, useEffect, useCallback } from "react";
+
+// ** Import Utils
+import { __API } from "../../../../utility/Utils";
 
 // ** Add New Modal Component
-import AddNewModal from "../user/AddNew";
+import DeptForm from "../../../ui-elements/forms/DeptForm";
 
 // ** Third Party Components
+import axios from "axios";
 import ReactPaginate from "react-paginate";
 import DataTable from "react-data-table-component";
 import {
@@ -32,6 +35,7 @@ import {
 	DropdownMenu,
 	DropdownItem,
 	DropdownToggle,
+	Spinner,
 	UncontrolledButtonDropdown,
 } from "reactstrap";
 
@@ -48,18 +52,25 @@ const Department = () => {
 	const [currentPage, setCurrentPage] = useState(0);
 	const [searchValue, setSearchValue] = useState("");
 	const [filteredData, setFilteredData] = useState([]);
-	const [dataUser, setDataUser] = useState([]);
+	const [deptData, setDeptData] = useState([]);
+	const [isFetching, setIsFetching] = useState(false);
+	const [selectedRow, setSelectedRow] = useState([]);
+	const [isRowSelected, setIsRowSelected] = useState(false);
+	const [type, setType] = useState("");
 
 	const columns = [
 		{
 			name: "Name",
-			width: "220px",
+			width: "275px",
 			selector: (row) => row.name,
 			sortable: (row) => row.name,
+			style: {
+				fontWeight: "bold",
+			},
 		},
 		{
 			name: "Description",
-			width: "220px",
+			width: "400px",
 			selector: (row) => row.desc,
 			sortable: (row) => row.desc,
 		},
@@ -68,34 +79,42 @@ const Department = () => {
 			width: "80px",
 			selector: (row) => row.lob,
 			sortable: (row) => row.lob,
+			center: true,
 		},
 		{
 			name: "Divisi",
 			width: "150px",
 			selector: (row) => row.div,
 			sortable: (row) => row.div,
+			center: true,
 		},
 		{
 			name: "Status",
 			width: "100px",
 			selector: (row) => row.status,
 			sortable: (row) => row.status,
+			center: true,
+			style: {
+				fontWeight: "bold",
+			},
 		},
 	];
 
 	const fetchData = async () => {
+		setIsFetching(true);
 		await axios
-			.post("https://localhost:44309/api/data", {
+			.post(__API, {
 				Option: "GET DEPARTMENT",
 			})
 			.then((res) => {
 				const data = JSON.parse(res.data).map((item, index) => {
 					return {
 						...item,
-						id: index,
+						id: index + 1,
 					};
 				});
-				setDataUser(data);
+				setDeptData(data);
+				setIsFetching(false);
 			});
 	};
 
@@ -103,8 +122,24 @@ const Department = () => {
 		fetchData();
 	}, []);
 
+	useEffect(() => {
+		console.log(deptData);
+	}, [deptData]);
+
+	const selectRowHandler = useCallback((state) => {
+		setSelectedRow(state.selectedRows);
+
+		state.selectedRows.length === 1
+			? setIsRowSelected(true)
+			: setIsRowSelected(false);
+	}, []);
+
 	// ** Function to handle Modal toggle
-	const handleModal = () => setModal(!modal);
+	const handleModal = (e) => {
+		setModal(!modal);
+		if (e.hasOwnProperty("target")) setType(e.target.id);
+		else if (e === "reload") fetchData();
+	};
 
 	// ** Function to handle filter
 	const handleFilter = (e) => {
@@ -113,7 +148,7 @@ const Department = () => {
 		setSearchValue(value);
 
 		if (value.length) {
-			updatedData = dataUser.filter((item) => {
+			updatedData = deptData.filter((item) => {
 				const inc =
 					(item.name &&
 						item.name
@@ -150,7 +185,7 @@ const Department = () => {
 			pageCount={
 				searchValue.length
 					? Math.ceil(filteredData.length / 7)
-					: Math.ceil(dataUser.length / 7) || 1
+					: Math.ceil(deptData.length / 7) || 1
 			}
 			breakLabel="..."
 			pageRangeDisplayed={2}
@@ -174,7 +209,7 @@ const Department = () => {
 
 		const columnDelimiter = ",";
 		const lineDelimiter = "\n";
-		const keys = Object.keys(dataUser[0]);
+		const keys = Object.keys(deptData[0]);
 
 		result = "";
 		result += keys.join(columnDelimiter);
@@ -264,16 +299,41 @@ const Department = () => {
 						<Button
 							className="ms-2"
 							color="primary"
+							id="add"
 							onClick={handleModal}
 						>
-							<Plus size={15} />
-							<span className="align-middle ms-50">
+							<Plus size={15} id="add" />
+							<span className="align-middle ms-50" id="add">
 								Add Record
 							</span>
 						</Button>
 					</div>
 				</CardHeader>
 				<Row className="justify-content-end mx-0">
+					<Col
+						className="d-flex align-items-center justify-content-start"
+						md="6"
+						sm="12"
+					>
+						<Button
+							color={isRowSelected ? "warning" : "secondary"}
+							className="me-1"
+							id="edit"
+							disabled={!isRowSelected}
+							onClick={handleModal}
+						>
+							Edit
+						</Button>{" "}
+						{"  "}
+						<Button
+							color={isRowSelected ? "info" : "secondary"}
+							id="details"
+							disabled={!isRowSelected}
+							onClick={handleModal}
+						>
+							Details
+						</Button>
+					</Col>
 					<Col
 						className="d-flex align-items-center justify-content-end mt-1"
 						md="6"
@@ -297,19 +357,29 @@ const Department = () => {
 						noHeader
 						pagination
 						selectableRows
+						onSelectedRowsChange={selectRowHandler}
 						columns={columns}
 						paginationPerPage={6}
 						className="react-dataTable"
 						sortIcon={<ChevronDown size={10} />}
+						persistTableHead
 						// paginationComponent={CustomPagination}
 						// paginationDefaultPage={currentPage + 1}
 						selectableRowsComponent={BootstrapCheckbox}
-						data={searchValue.length ? filteredData : dataUser}
-						// data={!!dataUser ? dataUser : []}
+						data={searchValue.length ? filteredData : deptData}
+						progressPending={isFetching}
+						progressComponent={
+							<Spinner className="m-5" color="primary" />
+						}
 					/>
 				</div>
 			</Card>
-			<AddNewModal open={modal} handleModal={handleModal} />
+			<DeptForm
+				open={modal}
+				handleModal={handleModal}
+				type={type}
+				data={selectedRow}
+			/>
 		</Fragment>
 	);
 };

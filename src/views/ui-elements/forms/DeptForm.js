@@ -27,26 +27,51 @@ import "@styles/react/libs/flatpickr/flatpickr.scss";
 
 const MySwal = withReactContent(Swal);
 const initFormState = {
-	EmpType: "Tetap",
-	NIK: "",
-	Username: "",
+	DeptName: "",
+	Desc: "",
+	LOB: "3HA03",
+	Divisi: "FAITIA",
 	Status: 1,
-	Gender: "Male",
 };
 
-const UserForm = ({ open, handleModal, type, data }) => {
-	const nikRef = useRef();
-	const usernameRef = useRef();
+const DeptForm = ({ open, handleModal, type, data }) => {
+	const deptNameRef = useRef();
+	const descRef = useRef();
 
-	const [userForm, setUserForm] = useState(initFormState);
+	const [deptForm, setDeptForm] = useState(initFormState);
+	const [lob, setLob] = useState([]);
 
 	let title;
-	if (type === "add") title = "Tambah User Baru";
-	else if (type === "edit") title = "Ubah Data User";
-	else if (type === "details") title = "Detail User";
+	if (type === "add") title = "Tambah Departemen Baru";
+	else if (type === "edit") title = "Ubah Data Departemen";
+	else if (type === "details") title = "Detail Departemen";
+
+	const populateSelect = async () => {
+		await axios
+			.post(__API, {
+				Option: "GET LOB NAMES",
+			})
+			.then((res) => {
+				const data = JSON.parse(res.data).map((item, index) => {
+					return {
+						...item,
+						id: index + 1,
+					};
+				});
+				setLob(data);
+			});
+	};
+
+	useEffect(() => {
+		populateSelect();
+	}, []);
+
+	useEffect(() => {
+		console.log(lob);
+	}, [lob]);
 
 	const formHandler = (e) => {
-		setUserForm((prevState) => ({
+		setDeptForm((prevState) => ({
 			...prevState,
 			[e.target.name]: e.target.value,
 		}));
@@ -54,41 +79,41 @@ const UserForm = ({ open, handleModal, type, data }) => {
 
 	useEffect(() => {
 		if (data.length === 1) {
-			setUserForm({
-				EmpType: data[0].type,
-				NIK: data[0].nik,
-				Username: data[0].username,
+			setDeptForm({
+				DeptName: data[0].name,
+				Desc: data[0].desc,
+				LOB: data[0].lob,
+				Divisi: data[0].div,
 				Status: statusConvert(data[0].status),
-				Gender: data[0].gender,
 			});
-		} else if (data.length === 0) setUserForm(initFormState);
+		} else if (data.length === 0) setDeptForm(initFormState);
 	}, [data]);
 
 	useEffect(() => {
-		console.log(userForm);
-	}, [userForm]);
+		console.log(deptForm);
+	}, [deptForm]);
 
 	const submitForm = async () => {
-		console.log(userForm);
+		console.log(deptForm);
 		await axios
 			.post(__API, {
-				Option: "SUBMIT USER",
+				Option: "SUBMIT APP",
 				Type: type,
-				Status: userForm.Status,
-				User: {
-					EmpType: userForm.EmpType,
-					NIK: nikRef.current.value,
-					Username: usernameRef.current.value,
-					Gender: userForm.Gender,
+				Status: deptForm.Status,
+				Dept: {
+					DeptName: deptNameRef.current.value,
+					Desc: descRef.current.value,
+					LOB: deptForm.LOB,
+					Divisi: deptForm.Divisi,
 				},
 			})
 			.then(() => {
 				MySwal.fire({
 					title:
 						type === "add" ? (
-							<p>User berhasil ditambahkan</p>
+							<p>Departemen berhasil ditambahkan</p>
 						) : (
-							<p>Data user berhasil diubah</p>
+							<p>Data departemen berhasil diubah</p>
 						),
 					didClose: () => handleModal("reload"),
 				});
@@ -97,9 +122,9 @@ const UserForm = ({ open, handleModal, type, data }) => {
 				MySwal.fire({
 					title:
 						type === "add" ? (
-							<p>Gagal menambahkan user</p>
+							<p>Gagal menambahkan departemen</p>
 						) : (
-							<p>Gagal mengubah data user</p>
+							<p>Gagal mengubah data departemen</p>
 						),
 					didClose: () => handleModal(),
 				});
@@ -129,8 +154,50 @@ const UserForm = ({ open, handleModal, type, data }) => {
 			</ModalHeader>
 			<ModalBody className="flex-grow-1">
 				<div className="mb-1">
+					<Label className="form-label" for="nik">
+						Nama Departemen
+					</Label>
+					<InputGroup>
+						<InputGroupText>
+							<Hash size={15} />
+						</InputGroupText>
+						<Input
+							id="appname"
+							name="appname"
+							defaultValue={
+								deptForm.DeptName.length !== 0
+									? deptForm.DeptName
+									: ""
+							}
+							disabled={type === "details"}
+							placeholder="K2...."
+							innerRef={deptNameRef}
+						/>
+					</InputGroup>
+				</div>
+				<div className="mb-1">
+					<Label className="form-label" for="username">
+						Deskripsi
+					</Label>
+					<InputGroup>
+						<InputGroupText>
+							<User size={15} />
+						</InputGroupText>
+						<Input
+							id="ket"
+							name="ket"
+							defaultValue={
+								deptForm.Desc.length !== 0 ? deptForm.Desc : ""
+							}
+							disabled={type === "details"}
+							placeholder="Keterangan...."
+							innerRef={descRef}
+						/>
+					</InputGroup>
+				</div>
+				<div className="mb-1">
 					<Label className="form-label" for="type">
-						Type
+						LOB
 					</Label>
 					<InputGroup>
 						<InputGroupText>
@@ -140,56 +207,37 @@ const UserForm = ({ open, handleModal, type, data }) => {
 							type="select"
 							id="type"
 							name="EmpType"
-							value={userForm.EmpType}
+							value={deptForm.LOB}
 							disabled={type === "details"}
 							onChange={formHandler}
 						>
-							<option value="Tetap">HRIS</option>
-							<option value="NON_HRIS">NON HRIS</option>
+							{lob.map((option) => (
+								<option key={option.id} value={option.Name}>
+									{option.Name}
+								</option>
+							))}
 						</Input>
 					</InputGroup>
 				</div>
 				<div className="mb-1">
-					<Label className="form-label" for="nik">
-						NIK
+					<Label className="form-label" for="type">
+						Divisi
 					</Label>
 					<InputGroup>
 						<InputGroupText>
-							<Hash size={15} />
+							<Briefcase size={15} />
 						</InputGroupText>
 						<Input
-							id="nik"
-							name="nik"
-							type="number"
-							defaultValue={
-								userForm.NIK.length !== 0 ? userForm.NIK : ""
-							}
+							type="select"
+							id="type"
+							name="EmpType"
+							value={deptForm.Divisi}
 							disabled={type === "details"}
-							placeholder="123456789"
-							innerRef={nikRef}
-						/>
-					</InputGroup>
-				</div>
-				<div className="mb-1">
-					<Label className="form-label" for="username">
-						Username
-					</Label>
-					<InputGroup>
-						<InputGroupText>
-							<User size={15} />
-						</InputGroupText>
-						<Input
-							id="username"
-							name="username"
-							defaultValue={
-								userForm.Username.length !== 0
-									? userForm.Username
-									: ""
-							}
-							disabled={type === "details"}
-							placeholder="Akip Tsaqif"
-							innerRef={usernameRef}
-						/>
+							onChange={formHandler}
+						>
+							<option value="Tetap">DIV</option>
+							<option value="NON_HRIS">NON HRIS</option>
+						</Input>
 					</InputGroup>
 				</div>
 				<div className="mb-1">
@@ -204,33 +252,12 @@ const UserForm = ({ open, handleModal, type, data }) => {
 							type="select"
 							id="status"
 							name="Status"
-							value={userForm.Status}
+							value={deptForm.Status}
 							disabled={type === "details"}
 							onChange={formHandler}
 						>
 							<option value="1">Active</option>
 							<option value="0">Inactive</option>
-						</Input>
-					</InputGroup>
-				</div>
-				<div className="mb-1">
-					<Label className="form-label" for="username">
-						Gender
-					</Label>
-					<InputGroup>
-						<InputGroupText>
-							<User size={15} />
-						</InputGroupText>
-						<Input
-							type="select"
-							id="gender"
-							name="Gender"
-							value={userForm.Gender}
-							disabled={type === "details"}
-							onChange={formHandler}
-						>
-							<option value="Male">Male</option>
-							<option value="Female">Female</option>
 						</Input>
 					</InputGroup>
 				</div>
@@ -253,4 +280,4 @@ const UserForm = ({ open, handleModal, type, data }) => {
 	);
 };
 
-export default UserForm;
+export default DeptForm;

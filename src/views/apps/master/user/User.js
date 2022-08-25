@@ -101,6 +101,9 @@ const UserAllApps = () => {
 			width: "95px",
 			selector: (row) => row.status,
 			sortable: (row) => row.status,
+			style: {
+				fontWeight: "bold",
+			},
 		},
 	];
 
@@ -132,9 +135,6 @@ const UserAllApps = () => {
 		state.selectedRows.length === 1
 			? setIsRowSelected(true)
 			: setIsRowSelected(false);
-
-		console.log(state.selectedRows.length);
-		console.log(state.selectedRows);
 	}, []);
 
 	useEffect(() => {
@@ -144,7 +144,8 @@ const UserAllApps = () => {
 	// ** Function to handle Modal toggle
 	const handleModal = (e) => {
 		setModal(!modal);
-		setType(e.target.id);
+		if (e.hasOwnProperty("target")) setType(e.target.id);
+		else if (e === "reload") fetchData();
 	};
 
 	// ** Function to handle filter
@@ -257,134 +258,137 @@ const UserAllApps = () => {
 
 	return (
 		<Fragment>
-			<div className="vw-100">
-				<Card>
-					<CardHeader className="flex-md-row flex-column align-md-items-center align-items-start border-bottom">
-						<CardTitle tag="h4">Master User All Apps</CardTitle>
-						<div className="d-flex mt-md-0 mt-1">
-							<UncontrolledButtonDropdown>
-								<DropdownToggle color="secondary" caret outline>
-									<Share size={15} />
-									<span className="align-middle ms-50">
-										Export
-									</span>
-								</DropdownToggle>
-								<DropdownMenu>
-									<DropdownItem className="w-100">
-										<Printer size={15} />
-										<span className="align-middle ms-50">
-											Print
-										</span>
-									</DropdownItem>
-									<DropdownItem
-										className="w-100"
-										onClick={() => downloadCSV(data)}
-									>
-										<FileText size={15} />
-										<span className="align-middle ms-50">
-											CSV
-										</span>
-									</DropdownItem>
-									<DropdownItem className="w-100">
-										<Grid size={15} />
-										<span className="align-middle ms-50">
-											Excel
-										</span>
-									</DropdownItem>
-									<DropdownItem className="w-100">
-										<File size={15} />
-										<span className="align-middle ms-50">
-											PDF
-										</span>
-									</DropdownItem>
-									<DropdownItem className="w-100">
-										<Copy size={15} />
-										<span className="align-middle ms-50">
-											Copy
-										</span>
-									</DropdownItem>
-								</DropdownMenu>
-							</UncontrolledButtonDropdown>
-							<Button
-								className="ms-2"
-								id="add"
-								color="primary"
-								onClick={handleModal}
-							>
-								<Plus size={15} id="add" />
-								<span className="align-middle ms-50" id="add">
-									Add Record
+			<Card>
+				<CardHeader className="flex-md-row flex-column align-md-items-center align-items-start border-bottom">
+					<CardTitle tag="h4">Master User All Apps</CardTitle>
+					<div className="d-flex mt-md-0 mt-1">
+						<UncontrolledButtonDropdown>
+							<DropdownToggle color="secondary" caret outline>
+								<Share size={15} />
+								<span className="align-middle ms-50">
+									Export
 								</span>
-							</Button>
-						</div>
-					</CardHeader>
-					<Row className="justify-content-between mx-0">
-						<Col
-							className="d-flex align-items-center justify-content-start"
-							md="6"
-							sm="12"
+							</DropdownToggle>
+							<DropdownMenu>
+								<DropdownItem className="w-100">
+									<Printer size={15} />
+									<span className="align-middle ms-50">
+										Print
+									</span>
+								</DropdownItem>
+								<DropdownItem
+									className="w-100"
+									onClick={() => downloadCSV(data)}
+								>
+									<FileText size={15} />
+									<span className="align-middle ms-50">
+										CSV
+									</span>
+								</DropdownItem>
+								<DropdownItem className="w-100">
+									<Grid size={15} />
+									<span className="align-middle ms-50">
+										Excel
+									</span>
+								</DropdownItem>
+								<DropdownItem className="w-100">
+									<File size={15} />
+									<span className="align-middle ms-50">
+										PDF
+									</span>
+								</DropdownItem>
+								<DropdownItem className="w-100">
+									<Copy size={15} />
+									<span className="align-middle ms-50">
+										Copy
+									</span>
+								</DropdownItem>
+							</DropdownMenu>
+						</UncontrolledButtonDropdown>
+						<Button
+							className="ms-2"
+							id="add"
+							color="primary"
+							onClick={handleModal}
 						>
-							<Button
-								color={isRowSelected ? "warning" : "secondary"}
-								className="me-1"
-								id="edit"
-								disabled={!isRowSelected}
-								onClick={handleModal}
-							>
-								Edit
-							</Button>{" "}
-							{"  "}
-							<Button
-								color={isRowSelected ? "info" : "secondary"}
-								id="details"
-								disabled={!isRowSelected}
-								onClick={handleModal}
-							>
-								Details
-							</Button>
-						</Col>
-						<Col
-							className="d-flex align-items-center justify-content-end mt-1"
-							md="6"
-							sm="12"
-						>
-							<Label className="me-1" for="search-input">
-								Search
-							</Label>
-							<Input
-								className="dataTable-filter mb-50"
-								type="text"
-								bsSize="sm"
-								id="search-input"
-								value={searchValue}
-								onChange={handleFilter}
-							/>
-						</Col>
-					</Row>
-					<div className="react-dataTable react-dataTable-selectable-rows">
-						<DataTable
-							noHeader
-							pagination
-							selectableRows
-							onSelectedRowsChange={selectRowHandler}
-							columns={columns}
-							paginationPerPage={6}
-							className="react-dataTable"
-							sortIcon={<ChevronDown size={10} />}
-							persistTableHead
-							// paginationComponent={CustomPagination}
-							// paginationDefaultPage={currentPage + 1}
-							selectableRowsComponent={BootstrapCheckbox}
-							data={searchValue.length ? filteredData : dataUser}
-							progressPending={isFetching}
-							progressComponent={
-								<Spinner className="m-5" color="primary" />
-							}
-						/>
+							<Plus size={15} id="add" />
+							<span className="align-middle ms-50" id="add">
+								Add Record
+							</span>
+						</Button>
 					</div>
-				</Card>
-			</div>
-			<UserForm open={modal} handleModal={handleModal} type={type} />
+				</CardHeader>
+				<Row className="justify-content-between mx-0">
+					<Col
+						className="d-flex align-items-center justify-content-start"
+						md="6"
+						sm="12"
+					>
+						<Button
+							color={isRowSelected ? "warning" : "secondary"}
+							className="me-1"
+							id="edit"
+							disabled={!isRowSelected}
+							onClick={handleModal}
+						>
+							Edit
+						</Button>{" "}
+						{"  "}
+						<Button
+							color={isRowSelected ? "info" : "secondary"}
+							id="details"
+							disabled={!isRowSelected}
+							onClick={handleModal}
+						>
+							Details
+						</Button>
+					</Col>
+					<Col
+						className="d-flex align-items-center justify-content-end mt-1"
+						md="6"
+						sm="12"
+					>
+						<Label className="me-1" for="search-input">
+							Search
+						</Label>
+						<Input
+							className="dataTable-filter mb-50"
+							type="text"
+							bsSize="sm"
+							id="search-input"
+							value={searchValue}
+							onChange={handleFilter}
+						/>
+					</Col>
+				</Row>
+				<div className="react-dataTable react-dataTable-selectable-rows">
+					<DataTable
+						noHeader
+						pagination
+						selectableRows
+						onSelectedRowsChange={selectRowHandler}
+						columns={columns}
+						paginationPerPage={6}
+						className="react-dataTable"
+						sortIcon={<ChevronDown size={10} />}
+						persistTableHead
+						// paginationComponent={CustomPagination}
+						// paginationDefaultPage={currentPage + 1}
+						selectableRowsComponent={BootstrapCheckbox}
+						data={searchValue.length ? filteredData : dataUser}
+						progressPending={isFetching}
+						progressComponent={
+							<Spinner className="m-5" color="primary" />
+						}
+					/>
+				</div>
+			</Card>
+			<UserForm
+				open={modal}
+				handleModal={handleModal}
+				type={type}
+				data={selectedRow}
+			/>
 		</Fragment>
 	);
 };

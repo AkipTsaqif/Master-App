@@ -83,5 +83,13 @@ export const selectThemeColors = (theme) => ({
 	},
 });
 
+export const statusConvert = (status) => {
+	let convertedStatus = "";
+	if (status === "Active") convertedStatus = 1;
+	else if (status === "Inactive") convertedStatus = 0;
+	return convertedStatus;
+}
+
 // ** Global variables
 export const __API = "https://localhost:44309/api/data";
+
