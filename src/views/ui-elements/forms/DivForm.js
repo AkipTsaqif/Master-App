@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 
 // ** Utils
-import { __API, statusConvert, selectData } from "../../../utility/Utils";
+import { __API, statusConvert } from "../../../utility/Utils";
 
 // ** Third Party Components
 import axios from "axios";
@@ -27,43 +27,24 @@ import "@styles/react/libs/flatpickr/flatpickr.scss";
 
 const MySwal = withReactContent(Swal);
 const initFormState = {
-	DeptName: "",
-	Desc: "",
-	LOB: "3HA03",
-	Divisi: "FAITIA",
+	DivName: "",
+	DivDesc: "",
 	Status: 1,
 };
 
-const selectDataOptions = ["LOB", "DIVISI"];
-
-const DeptForm = ({ open, handleModal, type, data }) => {
-	const deptNameRef = useRef();
+const DivForm = ({ open, handleModal, type, data }) => {
+	const divNameRef = useRef();
 	const descRef = useRef();
 
-	const [deptForm, setDeptForm] = useState(initFormState);
-	const [lob, setLob] = useState([]);
-	const [divisi, setDivisi] = useState([]);
+	const [divForm, setDivForm] = useState(initFormState);
 
 	let title;
-	if (type === "add") title = "Tambah Departemen Baru";
-	else if (type === "edit") title = "Ubah Data Departemen";
-	else if (type === "details") title = "Detail Departemen";
-
-	useEffect(() => {
-		selectData(selectDataOptions).then((res) => {
-			if (res instanceof Object) {
-				if (res.hasOwnProperty(selectDataOptions[0])) {
-					setLob(res[selectDataOptions[0]]);
-				}
-				if (res.hasOwnProperty(selectDataOptions[1])) {
-					setDivisi(res[selectDataOptions[1]]);
-				}
-			}
-		});
-	}, []);
+	if (type === "add") title = "Tambah Divisi Baru";
+	else if (type === "edit") title = "Ubah Data Divisi";
+	else if (type === "details") title = "Detail Divisi";
 
 	const formHandler = (e) => {
-		setDeptForm((prevState) => ({
+		setDivForm((prevState) => ({
 			...prevState,
 			[e.target.name]: e.target.value,
 		}));
@@ -71,36 +52,32 @@ const DeptForm = ({ open, handleModal, type, data }) => {
 
 	useEffect(() => {
 		if (data.length === 1) {
-			setDeptForm({
-				DeptName: data[0].name,
-				Desc: data[0].desc,
-				LOB: data[0].lob,
-				Divisi: data[0].div,
+			setDivForm({
+				DivName: data[0].name,
+				DivDesc: data[0].desc,
 				Status: statusConvert(data[0].status),
 			});
-		} else if (data.length === 0) setDeptForm(initFormState);
+		} else if (data.length === 0) setDivForm(initFormState);
 	}, [data]);
 
 	const submitForm = async () => {
 		await axios
 			.post(__API, {
-				Option: "SUBMIT DEPARTMENT",
+				Option: "SUBMIT DIVISION",
 				Type: type,
-				Status: deptForm.Status,
-				LOB: deptForm.LOB,
-				Dept: {
-					DeptName: deptNameRef.current.value,
-					DeptDesc: descRef.current.value,
-					DeptDiv: deptForm.Divisi,
+				Status: divForm.Status,
+				Div: {
+					DivName: divNameRef.current.value,
+					DivDesc: descRef.current.value,
 				},
 			})
 			.then(() => {
 				MySwal.fire({
 					title:
 						type === "add" ? (
-							<p>Departemen berhasil ditambahkan</p>
+							<p>Divisi berhasil ditambahkan</p>
 						) : (
-							<p>Data departemen berhasil diubah</p>
+							<p>Data Divisi berhasil diubah</p>
 						),
 					didClose: () => handleModal("reload"),
 				});
@@ -109,9 +86,9 @@ const DeptForm = ({ open, handleModal, type, data }) => {
 				MySwal.fire({
 					title:
 						type === "add" ? (
-							<p>Gagal menambahkan departemen</p>
+							<p>Gagal menambahkan divisi</p>
 						) : (
-							<p>Gagal mengubah data departemen</p>
+							<p>Gagal mengubah data divisi</p>
 						),
 					didClose: () => handleModal(),
 				});
@@ -142,23 +119,23 @@ const DeptForm = ({ open, handleModal, type, data }) => {
 			<ModalBody className="flex-grow-1">
 				<div className="mb-1">
 					<Label className="form-label" for="nik">
-						Nama Departemen
+						Nama Divisi
 					</Label>
 					<InputGroup>
 						<InputGroupText>
 							<Hash size={15} />
 						</InputGroupText>
 						<Input
-							id="deptname"
-							name="deptname"
+							id="divname"
+							name="divname"
 							defaultValue={
-								deptForm.DeptName.length !== 0
-									? deptForm.DeptName
+								divForm.DivName.length !== 0
+									? divForm.DivName
 									: ""
 							}
 							disabled={type === "details"}
 							placeholder="K2...."
-							innerRef={deptNameRef}
+							innerRef={divNameRef}
 						/>
 					</InputGroup>
 				</div>
@@ -174,60 +151,14 @@ const DeptForm = ({ open, handleModal, type, data }) => {
 							id="desc"
 							name="Desc"
 							defaultValue={
-								deptForm.Desc.length !== 0 ? deptForm.Desc : ""
+								divForm.DivDesc.length !== 0
+									? divForm.DivDesc
+									: ""
 							}
 							disabled={type === "details"}
 							placeholder="Keterangan...."
 							innerRef={descRef}
 						/>
-					</InputGroup>
-				</div>
-				<div className="mb-1">
-					<Label className="form-label" for="type">
-						LOB
-					</Label>
-					<InputGroup>
-						<InputGroupText>
-							<Briefcase size={15} />
-						</InputGroupText>
-						<Input
-							type="select"
-							id="lob"
-							name="LOB"
-							value={deptForm.LOB}
-							disabled={type === "details"}
-							onChange={formHandler}
-						>
-							{lob.map((option) => (
-								<option key={option.id} value={option.Name}>
-									{`${option.Name} - ${option.Description}`}
-								</option>
-							))}
-						</Input>
-					</InputGroup>
-				</div>
-				<div className="mb-1">
-					<Label className="form-label" for="type">
-						Divisi
-					</Label>
-					<InputGroup>
-						<InputGroupText>
-							<Briefcase size={15} />
-						</InputGroupText>
-						<Input
-							type="select"
-							id="divisi"
-							name="Divisi"
-							value={deptForm.Divisi}
-							disabled={type === "details"}
-							onChange={formHandler}
-						>
-							{divisi.map((option) => (
-								<option key={option.id} value={option.Name}>
-									{option.Name}
-								</option>
-							))}
-						</Input>
 					</InputGroup>
 				</div>
 				<div className="mb-1">
@@ -242,7 +173,7 @@ const DeptForm = ({ open, handleModal, type, data }) => {
 							type="select"
 							id="status"
 							name="Status"
-							value={deptForm.Status}
+							value={divForm.Status}
 							disabled={type === "details"}
 							onChange={formHandler}
 						>
@@ -270,4 +201,4 @@ const DeptForm = ({ open, handleModal, type, data }) => {
 	);
 };
 
-export default DeptForm;
+export default DivForm;

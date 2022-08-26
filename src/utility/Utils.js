@@ -1,10 +1,12 @@
 import { DefaultRoute } from "../router/routes";
+import axios from "axios";
 
 // ** Checks if an object is empty (returns boolean)
 export const isObjEmpty = (obj) => Object.keys(obj).length === 0;
 
 // ** Returns K format from a number
-export const kFormatter = (num) => (num > 999 ? `${(num / 1000).toFixed(1)}k` : num);
+export const kFormatter = (num) =>
+	num > 999 ? `${(num / 1000).toFixed(1)}k` : num;
 
 // ** Converts HTML to string
 export const htmlToString = (html) => html.replace(/<\/?[^>]+(>|$)/g, "");
@@ -88,8 +90,33 @@ export const statusConvert = (status) => {
 	if (status === "Active") convertedStatus = 1;
 	else if (status === "Inactive") convertedStatus = 0;
 	return convertedStatus;
-}
+};
 
 // ** Global variables
 export const __API = "https://localhost:44309/api/data";
 
+export const selectData = async (type) => {
+	const temp = {};
+	// let selects = {};
+
+	if (type instanceof Array) {
+		await Promise.all(
+			type.map(async (item) => {
+				await axios
+					.post(__API, {
+						Option: `GET ${item} NAMES`,
+					})
+					.then((res) => {
+						const data = JSON.parse(res.data).map((item, index) => {
+							return {
+								...item,
+								id: index + 1,
+							};
+						});
+						temp[item] = data;
+					});
+			})
+		);
+	}
+	return temp;
+};
