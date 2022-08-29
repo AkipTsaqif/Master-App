@@ -15,8 +15,7 @@ const Division = lazy(() =>
 const Application = lazy(() =>
 	import("../../views/apps/master/app/Application")
 );
-
-const Kanban = lazy(() => import("../../views/apps/kanban"));
+const Group = lazy(() => import("../../views/apps/master/group/Group"));
 
 const InvoiceAdd = lazy(() => import("../../views/apps/invoice/add"));
 const InvoiceList = lazy(() => import("../../views/apps/invoice/list"));
@@ -75,12 +74,8 @@ const AppRoutes = [
 		path: "/master/application",
 	},
 	{
-		element: <Kanban />,
-		path: "/apps/kanban",
-		meta: {
-			appLayout: true,
-			className: "kanban-application",
-		},
+		element: <Group />,
+		path: "/master/group",
 	},
 	{
 		element: <InvoiceList />,

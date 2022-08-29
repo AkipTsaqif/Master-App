@@ -49,7 +49,7 @@ export default [
 		id: "mGroup",
 		title: "Master Group",
 		icon: <Calendar size={20} />,
-		navLink: "/apps/calendar",
+		navLink: "/master/group",
 	},
 	{
 		id: "mRole",

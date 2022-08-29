@@ -117,6 +117,21 @@ export const selectData = async (type) => {
 					});
 			})
 		);
+	} else {
+		await axios
+			.post(__API, {
+				Option: `GET ${type} NAMES`,
+			})
+			.then((res) => {
+				const data = JSON.parse(res.data).map((item, index) => {
+					return {
+						...item,
+						id: index + 1,
+					};
+				});
+				temp[type] = data;
+			});
 	}
+
 	return temp;
 };
