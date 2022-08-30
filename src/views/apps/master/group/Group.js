@@ -63,7 +63,6 @@ const Group = () => {
 	const [filteredData, setFilteredData] = useState([]);
 	const [groupData, setGroupData] = useState([]);
 	const [isFetching, setIsFetching] = useState(false);
-	const [selectedRow, setSelectedRow] = useState([]);
 	const [isRowSelected, setIsRowSelected] = useState(false);
 	const [type, setType] = useState("");
 	const [appNameList, setAppNameList] = useState([]);
@@ -72,13 +71,15 @@ const Group = () => {
 		table: "",
 	});
 	const [groupFormData, setGroupFormData] = useState({
-		ID: "",
-		AppName: "",
-		Status: 1,
-		GroupName: "",
+		id: "",
+		appname: "",
+		status: 1,
+		groupname: "",
 	});
 
 	const groupNameRef = useRef();
+	const groupIDRef = useRef();
+	const appNameRef = useRef();
 
 	const columns = [
 		{
@@ -162,9 +163,11 @@ const Group = () => {
 	};
 
 	const statusFormHandler = (e) => {
+		console.log(groupFormData);
+		console.log(e.target.value);
 		setGroupFormData((prevState) => ({
 			...prevState,
-			Status: e.target.value,
+			status: e.target.value,
 		}));
 	};
 
@@ -173,7 +176,14 @@ const Group = () => {
 	}, [groupFormData]);
 
 	const selectRowHandler = useCallback((state) => {
-		setSelectedRow(state.selectedRows);
+		setGroupFormData(state.selectedRows[0]);
+		groupNameRef.current = {
+			value:
+				state.selectedRows.length !== 0
+					? state.selectedRows[0].groupname
+					: "",
+		};
+		console.log(groupNameRef);
 
 		state.selectedRows.length === 1
 			? setIsRowSelected(true)
@@ -184,7 +194,6 @@ const Group = () => {
 	const handleForm = (e) => {
 		setForm(!form);
 		if (e.hasOwnProperty("target")) setType(e.target.id);
-		console.log(selectedRow);
 		console.log(type);
 	};
 
@@ -194,9 +203,14 @@ const Group = () => {
 			.post(__API, {
 				Option: "SUBMIT GROUP",
 				Type: type,
+				Status: groupFormData.status,
+				ID: groupIDRef.current.value,
 				App: {
-					AppName: groupFormData.AppName,
-					GroupName: groupNameRef,
+					AppName:
+						type === "edit"
+							? appNameRef.current.value
+							: groupFormData.AppName,
+					GroupName: groupNameRef.current.value,
 				},
 			})
 			.then(() => {
@@ -204,12 +218,13 @@ const Group = () => {
 					title:
 						type === "add" ? (
 							<p>
-								`Grup untuk aplikasi ${groupFormData.AppName}{" "}
+								`Grup untuk aplikasi {groupFormData.AppName}{" "}
 								berhasil ditambahkan`
 							</p>
 						) : (
 							<p>Grup berhasil diubah</p>
 						),
+					didClose: fetchData(),
 				});
 			})
 			.catch(() => {
@@ -475,7 +490,16 @@ const Group = () => {
 												name="name"
 												id="nameIcons"
 												disabled
+												defaultValue={
+													type === "edit"
+														? groupFormData?.id
+														: groupData[
+																groupData.length -
+																	1
+														  ].id + 1
+												}
 												placeholder="ID"
+												innerRef={groupIDRef}
 											/>
 										</Col>
 									</Row>
@@ -491,6 +515,14 @@ const Group = () => {
 												name="status"
 												id="Status"
 												onChange={statusFormHandler}
+												value={
+													type === "edit"
+														? groupFormData?.status ===
+														  "Active"
+															? 1
+															: 0
+														: 1
+												}
 											>
 												<option value="1">
 													Active
@@ -515,8 +547,13 @@ const Group = () => {
 												name="app"
 												type="select"
 												id="APP"
-												defaultValue={selectedApp.form}
+												value={
+													type === "edit"
+														? groupFormData?.appname
+														: ""
+												}
 												onChange={appFormHandler}
+												innerRef={appNameRef}
 											>
 												{appNameList.map((option) => (
 													<option
@@ -540,6 +577,12 @@ const Group = () => {
 												name="groupname"
 												id="groupname"
 												placeholder="Nama grup...."
+												value={
+													type === "edit"
+														? groupNameRef.current
+																.value
+														: ""
+												}
 												innerRef={groupNameRef}
 											/>
 										</Col>

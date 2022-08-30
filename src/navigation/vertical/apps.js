@@ -22,12 +22,6 @@ export default [
 		navLink: "/master/user",
 	},
 	{
-		id: "mAllAppsUser",
-		title: "Master Apps User",
-		icon: <MessageSquare size={20} />,
-		navLink: "/master/user-apps",
-	},
-	{
 		id: "mDepartment",
 		title: "Master Department",
 		icon: <CheckSquare size={20} />,
@@ -73,8 +67,14 @@ export default [
 		header: "Transaction",
 	},
 	{
+		id: "tUser",
+		title: "Transaction User",
+		icon: <Calendar size={20} />,
+		navLink: "/transaction/user",
+	},
+	{
 		id: "tMenu",
-		title: "Transaction Menu",
+		title: "Transaction App Menu",
 		icon: <Calendar size={20} />,
 		navLink: "/apps/calendar",
 	},

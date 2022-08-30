@@ -16,6 +16,7 @@ const Application = lazy(() =>
 	import("../../views/apps/master/app/Application")
 );
 const Group = lazy(() => import("../../views/apps/master/group/Group"));
+const TUser = lazy(() => import("../../views/apps/transaction/user/User"));
 
 const InvoiceAdd = lazy(() => import("../../views/apps/invoice/add"));
 const InvoiceList = lazy(() => import("../../views/apps/invoice/list"));
@@ -78,8 +79,8 @@ const AppRoutes = [
 		path: "/master/group",
 	},
 	{
-		element: <InvoiceList />,
-		path: "/apps/invoice/list",
+		element: <TUser />,
+		path: "/transaction/user",
 	},
 	{
 		element: <InvoicePreview />,
