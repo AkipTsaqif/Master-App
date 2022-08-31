@@ -9,7 +9,7 @@ import {
 } from "react";
 
 // ** Import Utils
-import { __API, selectData } from "../../../../utility/Utils";
+import { __API, selectData, statusConvert } from "../../../../utility/Utils";
 
 // ** Third Party Components
 import axios from "axios";
@@ -65,11 +65,10 @@ const Group = () => {
 	const [isFetching, setIsFetching] = useState(false);
 	const [isRowSelected, setIsRowSelected] = useState(false);
 	const [type, setType] = useState("");
-	const [appNameList, setAppNameList] = useState([]);
-	const [selectedApp, setSelectedApp] = useState({
-		form: "",
-		table: "",
-	});
+	const [appNameList, setAppNameList] = useState([{ AppName: "All", id: 0 }]);
+	const [gID, setGID] = useState();
+	const [filteredApp, setFilteredApp] = useState([]);
+	const [selectedApp, setSelectedApp] = useState("");
 	const [groupFormData, setGroupFormData] = useState({
 		id: "",
 		appname: "",
@@ -77,9 +76,7 @@ const Group = () => {
 		groupname: "",
 	});
 
-	const groupNameRef = useRef();
 	const groupIDRef = useRef();
-	const appNameRef = useRef();
 
 	const columns = [
 		{
@@ -120,12 +117,12 @@ const Group = () => {
 		await axios
 			.post(__API, {
 				Option: "GET GROUP",
-				App: {
-					AppName: !!selectedApp.table ? selectedApp.table : null,
-				},
 			})
 			.then((res) => {
-				setGroupData(JSON.parse(res.data));
+				const parse = JSON.parse(res.data);
+				setGroupData(parse);
+				setFilteredApp(parse);
+				setGID(parse[parse.length - 1].id + 1);
 				setIsFetching(false);
 			});
 	};
@@ -134,7 +131,7 @@ const Group = () => {
 		selectData("APP").then((res) => {
 			if (res instanceof Object) {
 				if (res.hasOwnProperty("APP")) {
-					setAppNameList(res.APP);
+					setAppNameList((prevState) => [...prevState, ...res.APP]);
 				}
 			}
 		});
@@ -142,48 +139,60 @@ const Group = () => {
 
 	useEffect(() => {
 		fetchData();
-	}, [selectedApp.table]);
+	}, []);
+
+	useEffect(() => {
+		console.log(appNameList);
+	}, [appNameList]);
 
 	const appHandler = (e) => {
-		setSelectedApp((prevState) => ({
-			...prevState,
-			table: e.target.value,
-		}));
+		e.target.value !== "All"
+			? setFilteredApp(
+					groupData.filter((app) => app.appname === e.target.value)
+			  )
+			: setFilteredApp(groupData);
+		setSelectedApp(e.target.value);
 	};
 
 	const appFormHandler = (e) => {
 		setGroupFormData((prevState) => ({
 			...prevState,
-			AppName: e.target.value,
-		}));
-		setSelectedApp((prevState) => ({
-			...prevState,
-			form: e.target.value,
+			appname: e.target.value,
 		}));
 	};
 
 	const statusFormHandler = (e) => {
-		console.log(groupFormData);
-		console.log(e.target.value);
+		console.log(e);
 		setGroupFormData((prevState) => ({
 			...prevState,
 			status: e.target.value,
 		}));
 	};
 
-	useEffect(() => {
-		console.log(groupFormData);
-	}, [groupFormData]);
+	const groupNameFormHandler = (e) => {
+		console.log(e);
+		setGroupFormData((prevState) => ({
+			...prevState,
+			groupname: e.target.value,
+		}));
+	};
 
 	const selectRowHandler = useCallback((state) => {
-		setGroupFormData(state.selectedRows[0]);
-		groupNameRef.current = {
-			value:
-				state.selectedRows.length !== 0
-					? state.selectedRows[0].groupname
-					: "",
-		};
-		console.log(groupNameRef);
+		if (state.selectedCount === 1) {
+			setGroupFormData({
+				...state.selectedRows[0],
+				status: statusConvert(state.selectedRows[0].status),
+			});
+			setType("edit");
+		} else {
+			setGroupFormData({
+				id: "",
+				appname: "",
+				status: 1,
+				groupname: "",
+			});
+			setType("");
+		}
 
 		state.selectedRows.length === 1
 			? setIsRowSelected(true)
@@ -194,7 +203,7 @@ const Group = () => {
 	const handleForm = (e) => {
 		setForm(!form);
 		if (e.hasOwnProperty("target")) setType(e.target.id);
-		console.log(type);
+		else setType("");
 	};
 
 	const submitForm = async () => {
@@ -206,11 +215,8 @@ const Group = () => {
 				Status: groupFormData.status,
 				ID: groupIDRef.current.value,
 				App: {
-					AppName:
-						type === "edit"
-							? appNameRef.current.value
-							: groupFormData.AppName,
-					GroupName: groupNameRef.current.value,
+					AppName: groupFormData.appname,
+					GroupName: groupFormData.groupname,
 				},
 			})
 			.then(() => {
@@ -246,14 +252,16 @@ const Group = () => {
 		setSearchValue(value);
 
 		if (value.length) {
-			updatedData = groupData.filter((item) => {
+			updatedData = filteredApp.filter((item) => {
 				const inc =
-					(item.name &&
-						item.name
+					(item.appname &&
+						item.appname
 							.toLowerCase()
 							.includes(value.toLowerCase())) ||
-					(item.desc &&
-						item.desc.toLowerCase().includes(value.toLowerCase()));
+					(item.groupname &&
+						item.groupname
+							.toLowerCase()
+							.includes(value.toLowerCase()));
 
 				return inc;
 			});
@@ -350,7 +358,7 @@ const Group = () => {
 							type="select"
 							id="app"
 							name="APP"
-							value={selectedApp.table}
+							value={selectedApp}
 							// disabled={type === "details"}
 							onChange={appHandler}
 						>
@@ -466,7 +474,7 @@ const Group = () => {
 						// paginationComponent={CustomPagination}
 						// paginationDefaultPage={currentPage + 1}
 						selectableRowsComponent={BootstrapCheckbox}
-						data={searchValue.length ? filteredData : groupData}
+						data={searchValue.length ? filteredData : filteredApp}
 						progressPending={isFetching}
 						progressComponent={
 							<Spinner className="m-5" color="primary" />
@@ -490,13 +498,10 @@ const Group = () => {
 												name="name"
 												id="nameIcons"
 												disabled
-												defaultValue={
+												value={
 													type === "edit"
 														? groupFormData?.id
-														: groupData[
-																groupData.length -
-																	1
-														  ].id + 1
+														: gID
 												}
 												placeholder="ID"
 												innerRef={groupIDRef}
@@ -517,10 +522,7 @@ const Group = () => {
 												onChange={statusFormHandler}
 												value={
 													type === "edit"
-														? groupFormData?.status ===
-														  "Active"
-															? 1
-															: 0
+														? groupFormData?.status
 														: 1
 												}
 											>
@@ -553,7 +555,6 @@ const Group = () => {
 														: ""
 												}
 												onChange={appFormHandler}
-												innerRef={appNameRef}
 											>
 												{appNameList.map((option) => (
 													<option
@@ -579,11 +580,10 @@ const Group = () => {
 												placeholder="Nama grup...."
 												value={
 													type === "edit"
-														? groupNameRef.current
-																.value
+														? groupFormData?.groupname
 														: ""
 												}
-												innerRef={groupNameRef}
+												onChange={groupNameFormHandler}
 											/>
 										</Col>
 									</Row>
