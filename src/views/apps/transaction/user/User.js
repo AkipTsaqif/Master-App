@@ -91,6 +91,12 @@ const TUser = () => {
 			sortable: (row) => row.lob,
 		},
 		{
+			name: "Departemen",
+			width: "80px",
+			selector: (row) => row.dept,
+			sortable: (row) => row.dept,
+		},
+		{
 			name: "Email Kantor",
 			minWidth: "275px",
 			selector: (row) => row.email,
@@ -111,7 +117,7 @@ const TUser = () => {
 		setIsFetching(true);
 		await axios
 			.post(__API, {
-				Option: "GET ALL USER DATA",
+				Option: "GET USER TRANSACTION TABLE",
 			})
 			.then((res) => {
 				const data = JSON.parse(res.data).map((item, index) => {
@@ -121,6 +127,7 @@ const TUser = () => {
 					};
 				});
 				setDataUser(data);
+				console.log(data);
 				setIsFetching(false);
 			});
 	};
@@ -260,7 +267,7 @@ const TUser = () => {
 		<Fragment>
 			<Card>
 				<CardHeader className="flex-md-row flex-column align-md-items-center align-items-start border-bottom">
-					<CardTitle tag="h4">Master User All Apps</CardTitle>
+					<CardTitle tag="h4">Transaction User Table</CardTitle>
 					<div className="d-flex mt-md-0 mt-1">
 						<UncontrolledButtonDropdown>
 							<DropdownToggle color="secondary" caret outline>
