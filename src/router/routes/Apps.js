@@ -45,10 +45,6 @@ const AppRoutes = [
 	{
 		element: <User />,
 		path: "/master/user",
-		meta: {
-			appLayout: true,
-			className: "email-application",
-		},
 	},
 	{
 		path: "/master/user-apps",

@@ -312,17 +312,6 @@ const TUser = () => {
 								</DropdownItem>
 							</DropdownMenu>
 						</UncontrolledButtonDropdown>
-						<Button
-							className="ms-2"
-							id="add"
-							color="primary"
-							onClick={handleModal}
-						>
-							<Plus size={15} id="add" />
-							<span className="align-middle ms-50" id="add">
-								Add Record
-							</span>
-						</Button>
 					</div>
 				</CardHeader>
 				<Row className="justify-content-between mx-0">

@@ -1,8 +1,16 @@
 // ** React Imports
-import { Fragment, useState, forwardRef, useEffect, useCallback } from "react";
+import {
+	Fragment,
+	useState,
+	forwardRef,
+	useEffect,
+	useCallback,
+	useRef,
+} from "react";
+import { useLocation } from "react-router-dom";
 
 // ** Utils
-import { __API } from "../../../../utility/Utils";
+import { statusConvert, __API } from "@utils";
 
 // ** Add New Modal Component
 import UserForm from "../../../ui-elements/forms/UserForm";
@@ -32,6 +40,8 @@ import {
 	Button,
 	CardTitle,
 	CardHeader,
+	CardBody,
+	Form,
 	DropdownMenu,
 	DropdownItem,
 	DropdownToggle,
@@ -48,15 +58,25 @@ const BootstrapCheckbox = forwardRef((props, ref) => (
 
 const UserAllApps = () => {
 	// ** States
-	const [modal, setModal] = useState(false);
+	const [form, setForm] = useState(false);
 	const [currentPage, setCurrentPage] = useState(0);
 	const [searchValue, setSearchValue] = useState("");
 	const [filteredData, setFilteredData] = useState([]);
 	const [dataUser, setDataUser] = useState([]);
-	const [selectedRow, setSelectedRow] = useState([]);
-	const [isRowSelected, setIsRowSelected] = useState(false);
 	const [type, setType] = useState("");
 	const [isFetching, setIsFetching] = useState(false);
+	const [userFormData, setUserFormData] = useState({
+		EmpType: "Tetap",
+		NIK: "",
+		Username: "",
+		Status: 1,
+		Gender: "",
+	});
+
+	const loc = useLocation();
+	const ref = useRef(null);
+	const timerRef = useRef(null);
+	console.log(loc);
 
 	const columns = [
 		{
@@ -130,22 +150,68 @@ const UserAllApps = () => {
 	}, []);
 
 	const selectRowHandler = useCallback((state) => {
-		setSelectedRow(state.selectedRows);
-
-		state.selectedRows.length === 1
-			? setIsRowSelected(true)
-			: setIsRowSelected(false);
+		setUserFormData((prevState) => ({
+			...prevState,
+			EmpType: state.selectedRows[0].type,
+			NIK: state.selectedRows[0].nik,
+			Status: statusConvert(state.selectedRows[0].status),
+			Username: state.selectedRows[0].username,
+			Gender: state.selectedRows[0].gender,
+		}));
 	}, []);
 
-	useEffect(() => {
-		console.log(selectedRow);
-	}, [selectedRow]);
-
 	// ** Function to handle Modal toggle
-	const handleModal = (e) => {
-		setModal(!modal);
+	const handleForm = (e) => {
+		setForm(!form);
+
+		timerRef.current = setTimeout(
+			() => ref.current.scrollIntoView({ behavior: "smooth" }),
+			100
+		);
 		if (e.hasOwnProperty("target")) setType(e.target.id);
-		else if (e === "reload") fetchData();
+		else setType("");
+	};
+
+	useEffect(() => {
+		return () => clearTimeout(timerRef.current);
+	}, []);
+
+	const submitForm = async () => {
+		console.log(userFormData);
+		await axios
+			.post(__API, {
+				Option: "SUBMIT USER",
+				Type: type,
+				Status: userFormData.Status,
+				User: {
+					EmpType: userFormData.EmpType,
+					NIK: userFormData.NIK,
+					Username: userFormData.Username,
+					Gender: userFormData.Gender,
+				},
+			})
+			.then(() => {
+				MySwal.fire({
+					title:
+						type === "add" ? (
+							<p>User berhasil ditambahkan</p>
+						) : (
+							<p>Data user berhasil diubah</p>
+						),
+					didClose: () => fetchData(),
+				});
+			})
+			.catch(() => {
+				MySwal.fire({
+					title:
+						type === "add" ? (
+							<p>Gagal menambahkan user</p>
+						) : (
+							<p>Gagal mengubah data user</p>
+						),
+					didClose: () => fetchData(),
+				});
+			});
 	};
 
 	// ** Function to handle filter
@@ -177,6 +243,45 @@ const UserAllApps = () => {
 			setFilteredData(updatedData);
 			setSearchValue(value);
 		}
+	};
+
+	useEffect(() => {
+		console.log(userFormData);
+	}, [userFormData]);
+
+	const handleType = (e) => {
+		setUserFormData((prevState) => ({
+			...prevState,
+			EmpType: e.target.value,
+		}));
+	};
+
+	const handleStatus = (e) => {
+		setUserFormData((prevState) => ({
+			...prevState,
+			Status: e.target.value,
+		}));
+	};
+
+	const handleNIK = (e) => {
+		setUserFormData((prevState) => ({
+			...prevState,
+			NIK: e.target.value,
+		}));
+	};
+
+	const handleUsername = (e) => {
+		setUserFormData((prevState) => ({
+			...prevState,
+			Username: e.target.value,
+		}));
+	};
+
+	const handleGender = (e) => {
+		setUserFormData((prevState) => ({
+			...prevState,
+			Gender: e.target.value,
+		}));
 	};
 
 	// ** Function to handle Pagination
@@ -309,7 +414,7 @@ const UserAllApps = () => {
 							className="ms-2"
 							id="add"
 							color="primary"
-							onClick={handleModal}
+							onClick={handleForm}
 						>
 							<Plus size={15} id="add" />
 							<span className="align-middle ms-50" id="add">
@@ -318,27 +423,25 @@ const UserAllApps = () => {
 						</Button>
 					</div>
 				</CardHeader>
-				<Row className="justify-content-between mx-0">
+				<Row className="justify-content-end mx-0">
 					<Col
 						className="d-flex align-items-center justify-content-start"
 						md="6"
 						sm="12"
 					>
 						<Button
-							color={isRowSelected ? "warning" : "secondary"}
+							color={"warning"}
 							className="me-1"
 							id="edit"
-							disabled={!isRowSelected}
-							onClick={handleModal}
+							onClick={handleForm}
 						>
 							Edit
 						</Button>{" "}
 						{"  "}
 						<Button
-							color={isRowSelected ? "info" : "secondary"}
+							color={"info"}
 							id="details"
-							disabled={!isRowSelected}
-							onClick={handleModal}
+							onClick={handleForm}
 						>
 							Details
 						</Button>
@@ -366,6 +469,7 @@ const UserAllApps = () => {
 						noHeader
 						pagination
 						selectableRows
+						selectableRowsSingle
 						onSelectedRowsChange={selectRowHandler}
 						columns={columns}
 						paginationPerPage={6}
@@ -383,12 +487,142 @@ const UserAllApps = () => {
 					/>
 				</div>
 			</Card>
-			<UserForm
+			{/* <UserForm
 				open={modal}
 				handleModal={handleModal}
 				type={type}
 				data={selectedRow}
-			/>
+			/> */}
+			{form ? (
+				<Card>
+					<CardBody>
+						<Form>
+							<Row>
+								<Col md="6" sm="12">
+									<Row className="mb-1">
+										<Label sm="3" for="empType">
+											Type
+										</Label>
+										<Col sm="9">
+											<Input
+												type="select"
+												name="empType"
+												id="empType"
+												onChange={handleType}
+												value={userFormData.Type}
+												placeholder="ID"
+											>
+												<option value="Tetap">
+													HRIS
+												</option>
+												<option value="NON_HRIS">
+													NON-HRIS
+												</option>
+											</Input>
+										</Col>
+									</Row>
+								</Col>
+								<Col md="6" sm="12">
+									<Row className="mb-1">
+										<Label sm="3" for="Status">
+											Status
+										</Label>
+										<Col sm="9">
+											<Input
+												type="select"
+												name="status"
+												id="Status"
+												onChange={handleStatus}
+												value={userFormData.Status}
+											>
+												<option value="1">
+													Active
+												</option>
+												<option value="0">
+													Inactive
+												</option>
+											</Input>
+										</Col>
+									</Row>
+								</Col>
+							</Row>
+
+							<Row>
+								<Col md="6" sm="12">
+									<Row className="mb-1">
+										<Label sm="3" for="NIK">
+											NIK
+										</Label>
+										<Col sm="9">
+											<Input
+												name="NIK"
+												id="NIK"
+												value={userFormData.NIK}
+												onChange={handleNIK}
+											/>
+										</Col>
+									</Row>
+								</Col>
+								<Col md="6" sm="12">
+									<Row className="mb-1">
+										<Label sm="3" for="Gender">
+											Gender
+										</Label>
+										<Col sm="9">
+											<Input
+												name="Gender"
+												id="Gender"
+												value={userFormData.Gender}
+												onChange={handleGender}
+											/>
+										</Col>
+									</Row>
+								</Col>
+							</Row>
+
+							<Row>
+								<Col>
+									<Row className="mb-1">
+										<Label sm="2" for="userName">
+											Username
+										</Label>
+										<Col sm="10">
+											<Input
+												name="userName"
+												id="userName"
+												value={userFormData.Username}
+												onChange={handleUsername}
+											/>
+										</Col>
+									</Row>
+								</Col>
+							</Row>
+
+							<Row>
+								<Col className="d-flex">
+									<Button
+										className="me-1"
+										color="primary"
+										onClick={submitForm}
+									>
+										Submit
+									</Button>
+									<Button
+										outline
+										color="secondary"
+										type="reset"
+									>
+										Reset
+									</Button>
+								</Col>
+							</Row>
+						</Form>
+					</CardBody>
+					<div ref={ref}></div>
+				</Card>
+			) : (
+				""
+			)}
 		</Fragment>
 	);
 };

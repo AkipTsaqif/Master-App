@@ -9,7 +9,7 @@ import {
 } from "react";
 
 // ** Import Utils
-import { __API, selectData, statusConvert } from "../../../../utility/Utils";
+import { __API, selectData, statusConvert } from "@utils";
 
 // ** Third Party Components
 import axios from "axios";
@@ -63,7 +63,6 @@ const Group = () => {
 	const [filteredData, setFilteredData] = useState([]);
 	const [groupData, setGroupData] = useState([]);
 	const [isFetching, setIsFetching] = useState(false);
-	const [isRowSelected, setIsRowSelected] = useState(false);
 	const [type, setType] = useState("");
 	const [appNameList, setAppNameList] = useState([{ AppName: "All", id: 0 }]);
 	const [gID, setGID] = useState();
@@ -193,10 +192,6 @@ const Group = () => {
 			});
 			setType("");
 		}
-
-		state.selectedRows.length === 1
-			? setIsRowSelected(true)
-			: setIsRowSelected(false);
 	}, []);
 
 	// ** Function to handle form toggle
@@ -433,10 +428,9 @@ const Group = () => {
 						sm="12"
 					>
 						<Button
-							color={isRowSelected ? "warning" : "secondary"}
+							color={"warning"}
 							className="me-1"
 							id="edit"
-							disabled={!isRowSelected}
 							onClick={handleForm}
 						>
 							Edit

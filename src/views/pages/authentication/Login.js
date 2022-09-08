@@ -99,11 +99,13 @@ const Login = () => {
 			useJwt
 				.login({ email: data.loginEmail, password: data.password })
 				.then((res) => {
+					console.log(res);
 					const data = {
 						...res.data.userData,
 						accessToken: res.data.accessToken,
 						refreshToken: res.data.refreshToken,
 					};
+					console.log(data);
 					dispatch(handleLogin(data));
 					ability.update(res.data.userData.ability);
 					navigate(getHomeRouteForLoggedInUser(data.role));
@@ -282,9 +284,8 @@ const Login = () => {
 									render={({ field }) => (
 										<Input
 											autoFocus
-											type="email"
 											placeholder="john@example.com"
-											invalid={errors.loginEmail && true}
+											// invalid={errors.loginEmail && true}
 											{...field}
 										/>
 									)}

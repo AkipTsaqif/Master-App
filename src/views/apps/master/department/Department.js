@@ -55,7 +55,6 @@ const Department = () => {
 	const [deptData, setDeptData] = useState([]);
 	const [isFetching, setIsFetching] = useState(false);
 	const [selectedRow, setSelectedRow] = useState([]);
-	const [isRowSelected, setIsRowSelected] = useState(false);
 	const [type, setType] = useState("");
 
 	const columns = [
@@ -128,10 +127,6 @@ const Department = () => {
 
 	const selectRowHandler = useCallback((state) => {
 		setSelectedRow(state.selectedRows);
-
-		state.selectedRows.length === 1
-			? setIsRowSelected(true)
-			: setIsRowSelected(false);
 	}, []);
 
 	// ** Function to handle Modal toggle
@@ -316,19 +311,17 @@ const Department = () => {
 						sm="12"
 					>
 						<Button
-							color={isRowSelected ? "warning" : "secondary"}
+							color={"warning"}
 							className="me-1"
 							id="edit"
-							disabled={!isRowSelected}
 							onClick={handleModal}
 						>
 							Edit
 						</Button>{" "}
 						{"  "}
 						<Button
-							color={isRowSelected ? "info" : "secondary"}
+							color={"info"}
 							id="details"
-							disabled={!isRowSelected}
 							onClick={handleModal}
 						>
 							Details

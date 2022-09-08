@@ -94,6 +94,7 @@ export const statusConvert = (status) => {
 
 // ** Global variables
 export const __API = "https://localhost:44309/api/data";
+export const __aAPI = "https://localhost:44309/api/auth";
 
 export const selectData = async (type) => {
 	const temp = {};
