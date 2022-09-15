@@ -2,10 +2,9 @@
 import { Fragment, useState, forwardRef, useEffect, useCallback } from "react";
 
 // ** Utils
-import { __API } from "../../../../utility/Utils";
+import { __API } from "@utils";
 
-// ** Add New Modal Component
-import UserForm from "../../../ui-elements/forms/UserForm";
+import UserTable from "../../../tables/data-tables/UserTable";
 
 // ** Third Party Components
 import axios from "axios";
@@ -27,11 +26,13 @@ import {
 	Row,
 	Col,
 	Card,
+	Form,
 	Input,
 	Label,
 	Button,
 	CardTitle,
 	CardHeader,
+	CardBody,
 	DropdownMenu,
 	DropdownItem,
 	DropdownToggle,
@@ -54,6 +55,7 @@ const TUser = () => {
 	const [filteredData, setFilteredData] = useState([]);
 	const [dataUser, setDataUser] = useState([]);
 	const [selectedRow, setSelectedRow] = useState([]);
+	const [selectedMasterRow, setSelectedMasterRow] = useState({});
 	const [isRowSelected, setIsRowSelected] = useState(false);
 	const [type, setType] = useState("");
 	const [isFetching, setIsFetching] = useState(false);
@@ -134,6 +136,8 @@ const TUser = () => {
 
 	useEffect(() => {
 		fetchData();
+		console.log(type);
+		console.log(selectedRow);
 	}, []);
 
 	const selectRowHandler = useCallback((state) => {
@@ -145,8 +149,8 @@ const TUser = () => {
 	}, []);
 
 	useEffect(() => {
-		console.log(selectedRow);
-	}, [selectedRow]);
+		console.log(selectedMasterRow);
+	}, [selectedMasterRow]);
 
 	// ** Function to handle Modal toggle
 	const handleModal = (e) => {
@@ -265,6 +269,9 @@ const TUser = () => {
 
 	return (
 		<Fragment>
+			<UserTable
+				setSelectedRow={selectedMasterRow && setSelectedMasterRow}
+			/>
 			<Card>
 				<CardHeader className="flex-md-row flex-column align-md-items-center align-items-start border-bottom">
 					<CardTitle tag="h4">Transaction User Table</CardTitle>
@@ -379,12 +386,241 @@ const TUser = () => {
 					/>
 				</div>
 			</Card>
-			<UserForm
+			{/* <UserForm
 				open={modal}
 				handleModal={handleModal}
 				type={type}
 				data={selectedRow}
-			/>
+			/> */}
+			<Card>
+				<CardBody>
+					<Form>
+						<Row>
+							<Col md="6" sm="12">
+								<Row className="mb-1">
+									<Label sm="3" for="empType">
+										Type
+									</Label>
+									<Col sm="9">
+										<Input
+											type="select"
+											name="empType"
+											id="empType"
+											// onChange={handleType}
+											// value={userFormData.Type}
+											placeholder="ID"
+										>
+											<option value="Tetap">HRIS</option>
+											<option value="NON_HRIS">
+												NON-HRIS
+											</option>
+										</Input>
+									</Col>
+								</Row>
+							</Col>
+							<Col md="6" sm="12">
+								<Row className="mb-1">
+									<Label sm="3" for="Status">
+										Status
+									</Label>
+									<Col sm="9">
+										<Input
+											type="select"
+											name="status"
+											id="Status"
+											// onChange={handleStatus}
+											// value={userFormData.Status}
+										>
+											<option value="1">Active</option>
+											<option value="0">Inactive</option>
+										</Input>
+									</Col>
+								</Row>
+							</Col>
+						</Row>
+
+						<Row>
+							<Col md="6" sm="12">
+								<Row className="mb-1">
+									<Label sm="3" for="NIK">
+										NIK
+									</Label>
+									<Col sm="9">
+										<Input
+											name="NIK"
+											id="NIK"
+											// value={userFormData.NIK}
+											// onChange={handleNIK}
+										/>
+									</Col>
+								</Row>
+							</Col>
+							<Col md="6" sm="12">
+								<Row className="mb-1">
+									<Label sm="3" for="AD">
+										User AD
+									</Label>
+									<Col sm="9">
+										<Input
+											name="AD"
+											id="AD"
+											// value={userFormData.Gender}
+											// onChange={handleGender}
+										/>
+									</Col>
+								</Row>
+							</Col>
+						</Row>
+
+						<Row>
+							<Col md="6" sm="12">
+								<Row className="mb-1">
+									<Label sm="3" for="userName">
+										Username
+									</Label>
+									<Col sm="9">
+										<Input
+											name="userName"
+											id="userName"
+											// value={userFormData.Username}
+											// onChange={handleUsername}
+										/>
+									</Col>
+								</Row>
+							</Col>
+							<Col md="6" sm="12">
+								<Row className="mb-1">
+									<Label
+										sm="3"
+										className="text-nowrap"
+										for="Dept"
+									>
+										Departemen
+									</Label>
+									<Col sm="9">
+										<Input
+											name="Dept"
+											id="Dept"
+											// value={userFormData.Gender}
+											// onChange={handleGender}
+										/>
+									</Col>
+								</Row>
+							</Col>
+						</Row>
+						<Row>
+							<Col md="6" sm="12">
+								<Row className="mb-1">
+									<Label sm="3">LOB</Label>
+									<Col sm="9">
+										// BIKIN MULTISELECT AUTOCOMPLETE BESOK
+										<Input
+											name="LOB"
+											id="LOB"
+											// value={userFormData.Username}
+											// onChange={handleUsername}
+										/>
+									</Col>
+								</Row>
+							</Col>
+							<Col md="6" sm="12">
+								<Row className="mb-1">
+									<Label sm="3" for="lobDesc">
+										LOB Desc
+									</Label>
+									<Col sm="9">
+										<Input
+											name="lobDesc"
+											id="lobDesc"
+											// value={userFormData.Gender}
+											// onChange={handleGender}
+										/>
+									</Col>
+								</Row>
+							</Col>
+						</Row>
+						<Row>
+							<Col md="6" sm="12">
+								<Row className="mb-1">
+									<Label sm="3" for="email">
+										Email Kantor
+									</Label>
+									<Col sm="9">
+										<Input
+											name="email"
+											id="email"
+											// value={userFormData.Username}
+											// onChange={handleUsername}
+										/>
+									</Col>
+								</Row>
+							</Col>
+							<Col md="6" sm="12">
+								<Row className="mb-1">
+									<Label sm="3" for="emailPersonal">
+										Email Pribadi
+									</Label>
+									<Col sm="9">
+										<Input
+											name="emailPersonal"
+											id="emailPersonal"
+											// value={userFormData.Gender}
+											// onChange={handleGender}
+										/>
+									</Col>
+								</Row>
+							</Col>
+						</Row>
+						<Row>
+							<Col md="6" sm="12">
+								<Row className="mb-1">
+									<Label sm="3" for="orgGroup">
+										Org Group Name
+									</Label>
+									<Col sm="9">
+										<Input
+											name="orgGroup"
+											id="orgGroup"
+											// value={userFormData.Username}
+											// onChange={handleUsername}
+										/>
+									</Col>
+								</Row>
+							</Col>
+							<Col md="6" sm="12">
+								<Row className="mb-1">
+									<Label sm="3" for="divisi">
+										Divisi
+									</Label>
+									<Col sm="9">
+										<Input
+											name="divisi"
+											id="divisi"
+											// value={userFormData.Gender}
+											// onChange={handleGender}
+										/>
+									</Col>
+								</Row>
+							</Col>
+						</Row>
+
+						<Row>
+							<Col className="d-flex">
+								<Button
+									className="me-1"
+									color="primary"
+									// onClick={submitForm}
+								>
+									Submit
+								</Button>
+								<Button outline color="secondary" type="reset">
+									Reset
+								</Button>
+							</Col>
+						</Row>
+					</Form>
+				</CardBody>
+			</Card>
 		</Fragment>
 	);
 };

@@ -12,11 +12,10 @@ import { useLocation } from "react-router-dom";
 // ** Utils
 import { statusConvert, __API } from "@utils";
 
-// ** Add New Modal Component
-import UserForm from "../../../ui-elements/forms/UserForm";
-
 // ** Third Party Components
 import axios from "axios";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 import ReactPaginate from "react-paginate";
 import DataTable from "react-data-table-component";
 import {
@@ -55,6 +54,8 @@ const BootstrapCheckbox = forwardRef((props, ref) => (
 		<Input type="checkbox" ref={ref} {...props} />
 	</div>
 ));
+
+const MySwal = withReactContent(Swal);
 
 const UserAllApps = () => {
 	// ** States
@@ -150,14 +151,24 @@ const UserAllApps = () => {
 	}, []);
 
 	const selectRowHandler = useCallback((state) => {
-		setUserFormData((prevState) => ({
-			...prevState,
-			EmpType: state.selectedRows[0].type,
-			NIK: state.selectedRows[0].nik,
-			Status: statusConvert(state.selectedRows[0].status),
-			Username: state.selectedRows[0].username,
-			Gender: state.selectedRows[0].gender,
-		}));
+		if (state.selectedCount !== 0) {
+			setUserFormData((prevState) => ({
+				...prevState,
+				EmpType: state.selectedRows[0].type,
+				NIK: state.selectedRows[0].nik,
+				Status: statusConvert(state.selectedRows[0].status),
+				Username: state.selectedRows[0].username,
+				Gender: state.selectedRows[0].gender,
+			}));
+		} else {
+			setUserFormData({
+				EmpType: "Tetap",
+				NIK: "",
+				Username: "",
+				Status: 1,
+				Gender: "",
+			});
+		}
 	}, []);
 
 	// ** Function to handle Modal toggle
