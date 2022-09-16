@@ -2,13 +2,15 @@
 import { Fragment, useState, forwardRef, useEffect, useCallback } from "react";
 
 // ** Utils
-import { __API } from "@utils";
+import { __API, selectData } from "@utils";
 
 import UserTable from "../../../tables/data-tables/UserTable";
+import AutoComplete from "@components/autocomplete";
 
 // ** Third Party Components
 import axios from "axios";
 import ReactPaginate from "react-paginate";
+import _ from "lodash";
 import DataTable from "react-data-table-component";
 import {
 	ChevronDown,
@@ -59,6 +61,7 @@ const TUser = () => {
 	const [isRowSelected, setIsRowSelected] = useState(false);
 	const [type, setType] = useState("");
 	const [isFetching, setIsFetching] = useState(false);
+	const [lob, setLob] = useState([]);
 
 	const columns = [
 		{
@@ -136,6 +139,24 @@ const TUser = () => {
 
 	useEffect(() => {
 		fetchData();
+
+		selectData("LOB").then((res) => {
+			if (res instanceof Object) {
+				const grouped = _.chain(res.LOB)
+					.groupBy("GeneralDesc")
+					.map((item, value) => ({
+						GeneralDesc: value,
+						data: item.map((item) => {
+							return {
+								...item,
+								Name: `${item.Name} - ${item.Description}`,
+							};
+						}),
+					}))
+					.value();
+				setLob(grouped);
+			}
+		});
 		console.log(type);
 		console.log(selectedRow);
 	}, []);
@@ -149,8 +170,8 @@ const TUser = () => {
 	}, []);
 
 	useEffect(() => {
-		console.log(selectedMasterRow);
-	}, [selectedMasterRow]);
+		console.log(lob);
+	}, [lob]);
 
 	// ** Function to handle Modal toggle
 	const handleModal = (e) => {
@@ -514,11 +535,12 @@ const TUser = () => {
 									<Label sm="3">LOB</Label>
 									<Col sm="9">
 										// BIKIN MULTISELECT AUTOCOMPLETE BESOK
-										<Input
-											name="LOB"
-											id="LOB"
-											// value={userFormData.Username}
-											// onChange={handleUsername}
+										<AutoComplete
+											suggestions={lob}
+											className="form-control"
+											grouped={true}
+											filterKey="Name"
+											filterHeaderKey="GeneralDesc"
 										/>
 									</Col>
 								</Row>
