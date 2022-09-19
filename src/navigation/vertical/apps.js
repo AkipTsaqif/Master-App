@@ -68,15 +68,15 @@ export default [
 	},
 	{
 		id: "tUser",
-		title: "Transaction User",
+		title: "User Details",
 		icon: <Calendar size={20} />,
 		navLink: "/transaction/user",
 	},
 	{
 		id: "tMenu",
-		title: "Transaction App Menu",
+		title: "App Menu",
 		icon: <Calendar size={20} />,
-		navLink: "/apps/calendar",
+		navLink: "/transaction/menu",
 	},
 	{
 		id: "tGroup",
