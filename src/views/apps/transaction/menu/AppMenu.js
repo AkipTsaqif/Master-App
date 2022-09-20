@@ -10,7 +10,7 @@ import {
 import { useLocation } from "react-router-dom";
 
 // ** Utils
-import { statusConvert, __API, formatDate, selectThemeColors } from "@utils";
+import { __API, formatDate, selectThemeColors, statusConvert } from "@utils";
 import AutoComplete from "@components/autocomplete";
 
 // ** Third Party Components
@@ -58,6 +58,18 @@ const BootstrapCheckbox = forwardRef((props, ref) => (
 ));
 
 const MySwal = withReactContent(Swal);
+const initFormState = {
+	AppName: "",
+	GroupName: "",
+	MenuName: "",
+	MappingCode: "",
+	HeaderPos: "",
+	Submenu1Pos: "",
+	Submenu2Pos: "",
+	Submenu3Pos: "",
+	Submenu4Pos: "",
+	Status: "Active",
+};
 
 const AppMenu = () => {
 	// ** States
@@ -71,18 +83,9 @@ const AppMenu = () => {
 	const [type, setType] = useState("");
 	const [isFetching, setIsFetching] = useState(false);
 	const [selectedApp, setSelectedApp] = useState();
-	const [appMenuFormData, setAppMenuFormData] = useState({
-		AppName: "",
-		GroupName: "",
-		MenuName: "",
-		MappingCode: "",
-		HeaderPos: "",
-		Submenu1Pos: "",
-		Submenu2Pos: "",
-		Submenu3Pos: "",
-		Submenu4Pos: "",
-		Status: "Active",
-	});
+	const [appMenuFormData, setAppMenuFormData] = useState(initFormState);
+	const [selectedID, setSelectedID] = useState();
+	const [isDisabled, setIsDisabled] = useState(false);
 
 	const loc = useLocation();
 	const ref = useRef(null);
@@ -208,35 +211,46 @@ const AppMenu = () => {
 		if (selectedApp !== undefined) fetchAppGroupList();
 	}, [selectedApp]);
 
+	useEffect(() => {
+		if (form) {
+			timerRef.current = setTimeout(
+				() => ref.current.scrollIntoView({ behavior: "smooth" }),
+				100
+			);
+		}
+	}, [form]);
+
 	const selectRowHandler = useCallback((state) => {
 		if (state.selectedCount !== 0) {
+			setIsDisabled(true);
+			setForm(true);
+			setSelectedID(state.selectedRows[0].ID);
+			setSelectedApp(state.selectedRows[0].AppName);
 			setAppMenuFormData((prevState) => ({
 				...prevState,
-				EmpType: state.selectedRows[0].type,
-				NIK: state.selectedRows[0].nik,
-				Status: statusConvert(state.selectedRows[0].status),
-				Username: state.selectedRows[0].username,
-				Gender: state.selectedRows[0].gender,
+				AppName: state.selectedRows[0].AppName,
+				GroupName: state.selectedRows[0].GroupName,
+				MenuName: state.selectedRows[0].MenuName,
+				MappingCode: state.selectedRows[0].MappingCode,
+				HeaderPos: state.selectedRows[0].HeaderPos,
+				Submenu1Pos: state.selectedRows[0].Submenu1Pos,
+				Submenu2Pos: state.selectedRows[0].Submenu2Pos,
+				Submenu3Pos: state.selectedRows[0].Submenu3Pos,
+				Submenu4Pos: state.selectedRows[0].Submenu4Pos,
+				Status: state.selectedRows[0].Status,
 			}));
 		} else {
-			setAppMenuFormData({
-				EmpType: "Tetap",
-				NIK: "",
-				Username: "",
-				Status: 1,
-				Gender: "",
-			});
+			setForm(false);
+			setIsDisabled(false);
+			setSelectedID(null);
+			setAppMenuFormData(initFormState);
 		}
 	}, []);
 
 	// ** Function to handle Modal toggle
 	const handleForm = (e) => {
-		setForm(!form);
-
-		timerRef.current = setTimeout(
-			() => ref.current.scrollIntoView({ behavior: "smooth" }),
-			100
-		);
+		setForm(true);
+		setIsDisabled(false);
 		if (e.hasOwnProperty("target")) setType(e.target.id);
 		else setType("");
 	};
@@ -249,23 +263,44 @@ const AppMenu = () => {
 		console.log(appMenuFormData);
 		await axios
 			.post(__API, {
-				Option: "SUBMIT USER",
+				Option: "SUBMIT APP MENU",
 				Type: type,
-				Status: appMenuFormData.Status,
-				User: {
-					EmpType: appMenuFormData.EmpType,
-					NIK: appMenuFormData.NIK,
-					Username: appMenuFormData.Username,
-					Gender: appMenuFormData.Gender,
+				Status: statusConvert(appMenuFormData.Status),
+				ID: selectedID,
+				App: {
+					AppName: appMenuFormData.AppName,
+					GroupName: appMenuFormData.GroupName,
+					MenuName: appMenuFormData.MenuName,
+					MappingCode: appMenuFormData.MappingCode,
+					HeaderPos: (appMenuFormData.HeaderPos =
+						appMenuFormData.HeaderPos
+							? appMenuFormData.HeaderPos
+							: 0),
+					Submenu1Pos: (appMenuFormData.Submenu1Pos =
+						appMenuFormData.Submenu1Pos
+							? appMenuFormData.Submenu1Pos
+							: 0),
+					Submenu2Pos: (appMenuFormData.Submenu2Pos =
+						appMenuFormData.Submenu2Pos
+							? appMenuFormData.Submenu2Pos
+							: 0),
+					Submenu3Pos: (appMenuFormData.Submenu3Pos =
+						appMenuFormData.Submenu3Pos
+							? appMenuFormData.Submenu3Pos
+							: 0),
+					Submenu4Pos: (appMenuFormData.Submenu4Pos =
+						appMenuFormData.Submenu4Pos
+							? appMenuFormData.Submenu4Pos
+							: 0),
 				},
 			})
 			.then(() => {
 				MySwal.fire({
 					title:
 						type === "add" ? (
-							<p>User berhasil ditambahkan</p>
+							<p>Menu aplikasi berhasil ditambahkan</p>
 						) : (
-							<p>Data user berhasil diubah</p>
+							<p>Menu aplikasi berhasil diubah</p>
 						),
 					didClose: () => fetchData(),
 				});
@@ -274,9 +309,9 @@ const AppMenu = () => {
 				MySwal.fire({
 					title:
 						type === "add" ? (
-							<p>Gagal menambahkan user</p>
+							<p>Gagal menambahkan menu aplikasi</p>
 						) : (
-							<p>Gagal mengubah data user</p>
+							<p>Gagal mengubah menu aplikasi</p>
 						),
 					didClose: () => fetchData(),
 				});
@@ -462,24 +497,7 @@ const AppMenu = () => {
 						className="d-flex align-items-center justify-content-start"
 						md="6"
 						sm="12"
-					>
-						<Button
-							color={"warning"}
-							className="me-1"
-							id="edit"
-							onClick={handleForm}
-						>
-							Edit
-						</Button>{" "}
-						{"  "}
-						<Button
-							color={"info"}
-							id="details"
-							onClick={handleForm}
-						>
-							Details
-						</Button>
-					</Col>
+					></Col>
 					<Col
 						className="d-flex align-items-center justify-content-end mt-1"
 						md="6"
@@ -530,6 +548,16 @@ const AppMenu = () => {
 			{form ? (
 				<Card>
 					<CardBody>
+						<Button
+							color={isDisabled ? "warning" : "secondary"}
+							className="me-1"
+							id="edit"
+							disabled={!isDisabled}
+							onClick={handleForm}
+						>
+							Edit
+						</Button>
+						<hr />
 						<Form>
 							<Row className="d-flex justify-content-center align-items-center">
 								<Col md="6" sm="12">
@@ -544,9 +572,20 @@ const AppMenu = () => {
 												classNamePrefix="select"
 												options={appList}
 												isClearable={false}
-												onChange={(e) =>
-													setSelectedApp(e.value)
-												}
+												isDisabled={isDisabled}
+												onChange={(e) => {
+													setSelectedApp(e.value);
+													setAppMenuFormData(
+														(prevState) => ({
+															...prevState,
+															AppName: e.value,
+														})
+													);
+												}}
+												value={{
+													value: appMenuFormData?.AppName,
+													label: appMenuFormData?.AppName,
+												}}
 											/>
 										</Col>
 									</Row>
@@ -564,8 +603,21 @@ const AppMenu = () => {
 												options={appGroupList}
 												isClearable={false}
 												isDisabled={
-													selectedApp === undefined
+													appMenuFormData.AppName ===
+														"" || isDisabled
 												}
+												onChange={(e) => {
+													setAppMenuFormData(
+														(prevState) => ({
+															...prevState,
+															GroupName: e.value,
+														})
+													);
+												}}
+												value={{
+													value: appMenuFormData?.GroupName,
+													label: appMenuFormData?.GroupName,
+												}}
 											/>
 										</Col>
 									</Row>
@@ -583,6 +635,7 @@ const AppMenu = () => {
 												name="namaMenu"
 												id="namaMenu"
 												value={appMenuFormData.MenuName}
+												disabled={isDisabled}
 												onChange={(e) =>
 													setAppMenuFormData(
 														(prevState) => ({
@@ -605,6 +658,7 @@ const AppMenu = () => {
 											<Input
 												name="Gender"
 												id="Gender"
+												disabled={isDisabled}
 												value={
 													appMenuFormData.MappingCode
 												}
@@ -636,31 +690,49 @@ const AppMenu = () => {
 												classNamePrefix="select"
 												options={[
 													{
-														value: "1",
+														value: "Active",
 														label: "Active",
 													},
 													{
-														value: "0",
+														value: "Inactive",
 														label: "Inactive",
 													},
 												]}
 												isClearable={false}
+												isDisabled={isDisabled}
+												onChange={(e) => {
+													setSelectedApp(e.value);
+													setAppMenuFormData(
+														(prevState) => ({
+															...prevState,
+															Status: e.value,
+														})
+													);
+												}}
+												value={{
+													value: appMenuFormData?.Status,
+													label: appMenuFormData?.Status,
+												}}
 											/>
 										</Col>
 									</Row>
 								</Col>
 							</Row>
-
+							<hr />
+							<Row>
+								<h5 className="h5">Urutan Posisi Header</h5>
+							</Row>
 							<Row>
 								<Col md="6" sm="12">
-									<Row className="mb-1 d-flex justify-content-center align-items-center">
-										<Label sm="3" for="NIK">
-											Urutan Posisi Header
-										</Label>
-										<Col sm="9">
+									<Row className="mb-1">
+										<Label sm="3"></Label>
+										<Col sm="9" className="mb-1">
 											<Input
-												name="namaMenu"
-												id="namaMenu"
+												name="headerPos"
+												id="headerPos"
+												placeholder="Header"
+												type="number"
+												disabled={isDisabled}
 												value={
 													appMenuFormData.HeaderPos
 												}
@@ -690,17 +762,19 @@ const AppMenu = () => {
 										<Label sm="3"></Label>
 										<Col sm="9" className="mb-1">
 											<Input
-												name="namaMenu"
-												id="namaMenu"
+												name="submenu1Pos"
+												id="submenu1Pos"
 												placeholder="Submenu 1"
+												type="number"
+												disabled={isDisabled}
 												value={
-													appMenuFormData.HeaderPos
+													appMenuFormData.Submenu1Pos
 												}
 												onChange={(e) =>
 													setAppMenuFormData(
 														(prevState) => ({
 															...prevState,
-															HeaderPos:
+															Submenu1Pos:
 																e.target.value,
 														})
 													)
@@ -710,17 +784,19 @@ const AppMenu = () => {
 										<Label sm="3"></Label>
 										<Col sm="9">
 											<Input
-												name="namaMenu"
-												id="namaMenu"
+												name="submenu2Pos"
+												id="submenu2Pos"
 												placeholder="Submenu 2"
+												type="number"
+												disabled={isDisabled}
 												value={
-													appMenuFormData.HeaderPos
+													appMenuFormData.Submenu2Pos
 												}
 												onChange={(e) =>
 													setAppMenuFormData(
 														(prevState) => ({
 															...prevState,
-															HeaderPos:
+															Submenu2Pos:
 																e.target.value,
 														})
 													)
@@ -733,17 +809,19 @@ const AppMenu = () => {
 									<Row className="mb-1">
 										<Col sm="9" className="mb-1">
 											<Input
-												name="namaMenu"
-												id="namaMenu"
+												name="submenu3Pos"
+												id="submenu3Pos"
 												placeholder="Submenu 3"
+												type="number"
+												disabled={isDisabled}
 												value={
-													appMenuFormData.HeaderPos
+													appMenuFormData.Submenu3Pos
 												}
 												onChange={(e) =>
 													setAppMenuFormData(
 														(prevState) => ({
 															...prevState,
-															HeaderPos:
+															Submenu3Pos:
 																e.target.value,
 														})
 													)
@@ -752,17 +830,19 @@ const AppMenu = () => {
 										</Col>
 										<Col sm="9">
 											<Input
-												name="namaMenu"
-												id="namaMenu"
+												name="submenu4Pos"
+												id="submenu4Pos"
 												placeholder="Submenu 4"
+												type="number"
+												disabled={isDisabled}
 												value={
-													appMenuFormData.HeaderPos
+													appMenuFormData.Submenu4Pos
 												}
 												onChange={(e) =>
 													setAppMenuFormData(
 														(prevState) => ({
 															...prevState,
-															HeaderPos:
+															Submenu4Pos:
 																e.target.value,
 														})
 													)

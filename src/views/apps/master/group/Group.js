@@ -459,6 +459,7 @@ const Group = () => {
 						noHeader
 						pagination
 						selectableRows
+						selectableRowsSingle
 						onSelectedRowsChange={selectRowHandler}
 						columns={columns}
 						paginationPerPage={6}
@@ -543,11 +544,7 @@ const Group = () => {
 												name="app"
 												type="select"
 												id="APP"
-												value={
-													type === "edit"
-														? groupFormData?.appname
-														: ""
-												}
+												value={groupFormData?.appname}
 												onChange={appFormHandler}
 											>
 												{appNameList.map((option) => (
@@ -572,11 +569,7 @@ const Group = () => {
 												name="groupname"
 												id="groupname"
 												placeholder="Nama grup...."
-												value={
-													type === "edit"
-														? groupFormData?.groupname
-														: ""
-												}
+												value={groupFormData?.groupname}
 												onChange={groupNameFormHandler}
 											/>
 										</Col>
