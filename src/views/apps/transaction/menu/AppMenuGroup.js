@@ -11,7 +11,6 @@ import { useLocation } from "react-router-dom";
 
 // ** Utils
 import { __API, formatDate, selectThemeColors, statusConvert } from "@utils";
-import AutoComplete from "@components/autocomplete";
 
 // ** Third Party Components
 import axios from "axios";
@@ -62,12 +61,6 @@ const initFormState = {
 	AppName: "",
 	GroupName: "",
 	MenuName: "",
-	MappingCode: "",
-	HeaderPos: "",
-	Submenu1Pos: "",
-	Submenu2Pos: "",
-	Submenu3Pos: "",
-	Submenu4Pos: "",
 	Status: "Active",
 };
 
@@ -94,19 +87,10 @@ const AppMenu = () => {
 
 	const columns = [
 		{
-			name: "No",
+			name: "ID",
 			width: "50px",
-			selector: (row) => row.RowNum,
+			selector: (row) => row.AppMenuID,
 			// center: true,
-		},
-		{
-			name: "Nama Aplikasi",
-			width: "200px",
-			selector: (row) => row.AppName,
-			sortable: (row) => row.AppName,
-			style: {
-				fontWeight: "bold",
-			},
 		},
 		{
 			name: "Nama Grup",
@@ -119,16 +103,19 @@ const AppMenu = () => {
 			},
 		},
 		{
+			name: "Nama Aplikasi",
+			width: "200px",
+			selector: (row) => row.AppName,
+			sortable: (row) => row.AppName,
+			style: {
+				fontWeight: "bold",
+			},
+		},
+		{
 			name: "Nama Menu",
 			width: "200px",
 			selector: (row) => row.MenuName,
 			sortable: (row) => row.MenuName,
-		},
-		{
-			name: "Kode Mapping",
-			width: "150px",
-			selector: (row) => row.MappingCode,
-			sortable: (row) => row.MappingCode,
 		},
 		{
 			name: "Status",
@@ -159,7 +146,7 @@ const AppMenu = () => {
 		setIsFetching(true);
 		await axios
 			.post(__API, {
-				Option: "GET APP MENU",
+				Option: "GET APP MENU GROUP",
 			})
 			.then((res) => {
 				setAppMenuData(JSON.parse(res.data));
@@ -224,19 +211,13 @@ const AppMenu = () => {
 		if (state.selectedCount !== 0) {
 			setIsDisabled(true);
 			setForm(true);
-			setSelectedID(state.selectedRows[0].ID);
+			setSelectedID(state.selectedRows[0].AppMenuID);
 			setSelectedApp(state.selectedRows[0].AppName);
 			setAppMenuFormData((prevState) => ({
 				...prevState,
 				AppName: state.selectedRows[0].AppName,
 				GroupName: state.selectedRows[0].GroupName,
 				MenuName: state.selectedRows[0].MenuName,
-				MappingCode: state.selectedRows[0].MappingCode,
-				HeaderPos: state.selectedRows[0].HeaderPos,
-				Submenu1Pos: state.selectedRows[0].Submenu1Pos,
-				Submenu2Pos: state.selectedRows[0].Submenu2Pos,
-				Submenu3Pos: state.selectedRows[0].Submenu3Pos,
-				Submenu4Pos: state.selectedRows[0].Submenu4Pos,
 				Status: state.selectedRows[0].Status,
 			}));
 		} else {
@@ -263,7 +244,7 @@ const AppMenu = () => {
 		console.log(appMenuFormData);
 		await axios
 			.post(__API, {
-				Option: "SUBMIT APP MENU",
+				Option: "SUBMIT APP MENU GROUP",
 				Type: type,
 				Status: statusConvert(appMenuFormData.Status),
 				ID: selectedID,
@@ -271,27 +252,6 @@ const AppMenu = () => {
 					AppName: appMenuFormData.AppName,
 					GroupName: appMenuFormData.GroupName,
 					MenuName: appMenuFormData.MenuName,
-					MappingCode: appMenuFormData.MappingCode,
-					HeaderPos: (appMenuFormData.HeaderPos =
-						appMenuFormData.HeaderPos
-							? appMenuFormData.HeaderPos
-							: 0),
-					Submenu1Pos: (appMenuFormData.Submenu1Pos =
-						appMenuFormData.Submenu1Pos
-							? appMenuFormData.Submenu1Pos
-							: 0),
-					Submenu2Pos: (appMenuFormData.Submenu2Pos =
-						appMenuFormData.Submenu2Pos
-							? appMenuFormData.Submenu2Pos
-							: 0),
-					Submenu3Pos: (appMenuFormData.Submenu3Pos =
-						appMenuFormData.Submenu3Pos
-							? appMenuFormData.Submenu3Pos
-							: 0),
-					Submenu4Pos: (appMenuFormData.Submenu4Pos =
-						appMenuFormData.Submenu4Pos
-							? appMenuFormData.Submenu4Pos
-							: 0),
 				},
 			})
 			.then(() => {
@@ -434,7 +394,7 @@ const AppMenu = () => {
 		<Fragment>
 			<Card>
 				<CardHeader className="flex-md-row flex-column align-md-items-center align-items-start border-bottom">
-					<CardTitle tag="h4">Menu Aplikasi</CardTitle>
+					<CardTitle tag="h4">Menu Aplikasi Grup</CardTitle>
 					<div className="d-flex mt-md-0 mt-1">
 						<UncontrolledButtonDropdown>
 							<DropdownToggle color="secondary" caret outline>
@@ -652,35 +612,6 @@ const AppMenu = () => {
 								<Col md="6" sm="12">
 									<Row className="mb-1 d-flex justify-content-center align-items-center">
 										<Label sm="3" for="Gender">
-											Kode Mapping
-										</Label>
-										<Col sm="9">
-											<Input
-												name="Gender"
-												id="Gender"
-												disabled={isDisabled}
-												value={
-													appMenuFormData.MappingCode
-												}
-												onChange={(e) =>
-													setAppMenuFormData(
-														(prevState) => ({
-															...prevState,
-															MappingCode:
-																e.target.value,
-														})
-													)
-												}
-											/>
-										</Col>
-									</Row>
-								</Col>
-							</Row>
-
-							<Row>
-								<Col md="6" sm="12">
-									<Row className="mb-1 d-flex justify-content-center align-items-center">
-										<Label sm="3" for="Gender">
 											Status
 										</Label>
 										<Col sm="9">
@@ -718,140 +649,7 @@ const AppMenu = () => {
 									</Row>
 								</Col>
 							</Row>
-							<hr />
-							<Row>
-								<h5 className="h5">Urutan Posisi Header</h5>
-							</Row>
-							<Row>
-								<Col md="6" sm="12">
-									<Row className="mb-1">
-										<Label sm="3"></Label>
-										<Col sm="9" className="mb-1">
-											<Input
-												name="headerPos"
-												id="headerPos"
-												placeholder="Header"
-												type="number"
-												disabled={isDisabled}
-												value={
-													appMenuFormData.HeaderPos
-												}
-												onChange={(e) =>
-													setAppMenuFormData(
-														(prevState) => ({
-															...prevState,
-															HeaderPos:
-																e.target.value,
-														})
-													)
-												}
-											/>
-										</Col>
-									</Row>
-								</Col>
-							</Row>
 
-							<Row>
-								<h5 className="h5">
-									Posisi Submenu &#40;jika ada&#41;
-								</h5>
-							</Row>
-							<Row>
-								<Col md="6" sm="12">
-									<Row className="mb-1">
-										<Label sm="3"></Label>
-										<Col sm="9" className="mb-1">
-											<Input
-												name="submenu1Pos"
-												id="submenu1Pos"
-												placeholder="Submenu 1"
-												type="number"
-												disabled={isDisabled}
-												value={
-													appMenuFormData.Submenu1Pos
-												}
-												onChange={(e) =>
-													setAppMenuFormData(
-														(prevState) => ({
-															...prevState,
-															Submenu1Pos:
-																e.target.value,
-														})
-													)
-												}
-											/>
-										</Col>
-										<Label sm="3"></Label>
-										<Col sm="9">
-											<Input
-												name="submenu2Pos"
-												id="submenu2Pos"
-												placeholder="Submenu 2"
-												type="number"
-												disabled={isDisabled}
-												value={
-													appMenuFormData.Submenu2Pos
-												}
-												onChange={(e) =>
-													setAppMenuFormData(
-														(prevState) => ({
-															...prevState,
-															Submenu2Pos:
-																e.target.value,
-														})
-													)
-												}
-											/>
-										</Col>
-									</Row>
-								</Col>
-								<Col md="6" sm="12">
-									<Row className="mb-1">
-										<Col sm="9" className="mb-1">
-											<Input
-												name="submenu3Pos"
-												id="submenu3Pos"
-												placeholder="Submenu 3"
-												type="number"
-												disabled={isDisabled}
-												value={
-													appMenuFormData.Submenu3Pos
-												}
-												onChange={(e) =>
-													setAppMenuFormData(
-														(prevState) => ({
-															...prevState,
-															Submenu3Pos:
-																e.target.value,
-														})
-													)
-												}
-											/>
-										</Col>
-										<Col sm="9">
-											<Input
-												name="submenu4Pos"
-												id="submenu4Pos"
-												placeholder="Submenu 4"
-												type="number"
-												disabled={isDisabled}
-												value={
-													appMenuFormData.Submenu4Pos
-												}
-												onChange={(e) =>
-													setAppMenuFormData(
-														(prevState) => ({
-															...prevState,
-															Submenu4Pos:
-																e.target.value,
-														})
-													)
-												}
-											/>
-										</Col>
-									</Row>
-								</Col>
-							</Row>
 							<Row>
 								<Col className="d-flex">
 									<Button

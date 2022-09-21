@@ -76,7 +76,22 @@ export default [
 		id: "tMenu",
 		title: "App Menu",
 		icon: <Calendar size={20} />,
-		navLink: "/transaction/menu",
+		badge: "light-success",
+		badgeText: "New",
+		children: [
+			{
+				id: "appMenuGroup",
+				title: "App Menu Group",
+				icon: <Circle size={12} />,
+				navLink: "/transaction/appmenu/group",
+			},
+			{
+				id: "appMenuDetails",
+				title: "App Menu Details",
+				icon: <Circle size={12} />,
+				navLink: "/transaction/appmenu/details",
+			},
+		],
 	},
 	{
 		id: "tGroup",
