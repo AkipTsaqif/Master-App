@@ -3,9 +3,6 @@ import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 
 const User = lazy(() => import("../../views/apps/master/user/User"));
-const AppsUser = lazy(() =>
-	import("../../views/apps/master/user-app/AppsUser")
-);
 const Department = lazy(() =>
 	import("../../views/apps/master/department/Department")
 );
@@ -16,6 +13,8 @@ const Application = lazy(() =>
 	import("../../views/apps/master/app/Application")
 );
 const Group = lazy(() => import("../../views/apps/master/group/Group"));
+const Role = lazy(() => import("../../views/apps/master/role/Role"));
+const RoleUser = lazy(() => import("../../views/apps/master/role/RoleUser"));
 const TUser = lazy(() => import("../../views/apps/transaction/user/User"));
 const AppMenuGroup = lazy(() =>
 	import("../../views/apps/transaction/menu/AppMenuGroup")
@@ -53,14 +52,6 @@ const AppRoutes = [
 		path: "/master/user",
 	},
 	{
-		path: "/master/user-apps",
-		element: <AppsUser />,
-		meta: {
-			appLayout: true,
-			className: "chat-application",
-		},
-	},
-	{
 		element: <Department />,
 		path: "/master/department",
 		meta: {
@@ -79,6 +70,14 @@ const AppRoutes = [
 	{
 		element: <Group />,
 		path: "/master/group",
+	},
+	{
+		element: <Role />,
+		path: "/master/role/role",
+	},
+	{
+		element: <RoleUser />,
+		path: "/master/role/user",
 	},
 	{
 		element: <TUser />,

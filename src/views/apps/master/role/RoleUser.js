@@ -7,11 +7,9 @@ import {
 	useCallback,
 	useRef,
 } from "react";
-import { useLocation } from "react-router-dom";
 
 // ** Utils
-import { statusConvert, __API, formatDate } from "@utils";
-import UserTable from "../../../tables/data-tables/UserTable";
+import { __API, formatDate, selectThemeColors, statusConvert } from "@utils";
 
 // ** Third Party Components
 import axios from "axios";
@@ -19,6 +17,7 @@ import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import ReactPaginate from "react-paginate";
 import DataTable from "react-data-table-component";
+import Select from "react-select";
 import {
 	ChevronDown,
 	Share,
@@ -57,55 +56,71 @@ const BootstrapCheckbox = forwardRef((props, ref) => (
 ));
 
 const MySwal = withReactContent(Swal);
+const initFormState = {
+	AppName: "",
+	GroupName: "",
+	RoleName: "",
+	RoleDesc: "",
+	RoleType: "Static",
+	Status: "Active",
+};
 
-const UserAllApps = () => {
-	// ** States
-	const [form, setForm] = useState(false);
+const RoleUser = () => {
+	const [roleData, setRoleData] = useState([]);
 	const [currentPage, setCurrentPage] = useState(0);
 	const [searchValue, setSearchValue] = useState("");
 	const [filteredData, setFilteredData] = useState([]);
-	const [dataUser, setDataUser] = useState([]);
+	const [form, setForm] = useState(false);
 	const [type, setType] = useState("");
+	const [appList, setAppList] = useState([]);
+	const [groupList, setGroupList] = useState([]);
+	const [roleFormData, setRoleFormData] = useState(initFormState);
+	const [selectedApp, setSelectedApp] = useState();
+	const [selectedID, setSelectedID] = useState();
 	const [isFetching, setIsFetching] = useState(false);
-	const [selectedMasterRow, setSelectedMasterRow] = useState({});
-	const [userFormData, setUserFormData] = useState({
-		EmpType: "Tetap",
-		NIK: "",
-		Username: "",
-		Status: 1,
-		Gender: "",
-	});
+	const [isDisabled, setIsDisabled] = useState(false);
+	const [isFromTable, setIsFromTable] = useState(false);
 
-	const loc = useLocation();
 	const ref = useRef(null);
 	const timerRef = useRef(null);
-	console.log(loc);
 
 	const columns = [
 		{
-			name: "NIK",
-			width: "130px",
-			selector: (row) => row.NIK,
-			sortable: (row) => row.NIK,
-			style: {
-				fontWeight: "bold",
-			},
-		},
-		{
-			name: "Username",
-			width: "270px",
-			selector: (row) => row.Username,
-			sortable: (row) => row.Username,
+			name: "Nama Role",
+			minWidth: "150px",
+			selector: (row) => row.RoleName,
+			sortable: (row) => row.RoleName,
 			wrap: true,
 			style: {
 				fontWeight: "bold",
 			},
 		},
 		{
+			name: "Deskripsi",
+			width: "200px",
+			selector: (row) => row.RoleDesc,
+			sortable: (row) => row.RoleDesc,
+		},
+		{
 			name: "Tipe",
-			width: "130px",
-			selector: (row) => row.EmpType,
-			sortable: (row) => row.EmpType,
+			width: "90px",
+			selector: (row) => row.RoleType,
+			sortable: (row) => row.RoleType,
+		},
+		{
+			name: "Grup",
+			width: "200px",
+			selector: (row) => row.GroupName,
+			sortable: (row) => row.GroupName,
+			style: {
+				fontWeight: "bold",
+			},
+		},
+		{
+			name: "Aplikasi",
+			width: "200px",
+			selector: (row) => row.AppName,
+			sortable: (row) => row.AppName,
 		},
 		{
 			name: "Status",
@@ -133,56 +148,110 @@ const UserAllApps = () => {
 	];
 
 	const fetchData = async () => {
+		if (type === "edit") {
+			setRoleFormData(initFormState);
+			setForm(false);
+			setType("add");
+		}
 		setIsFetching(true);
 		await axios
 			.post(__API, {
-				Option: "GET ALL NEW MASTER USER DATA",
+				Option: "GET ROLE",
 			})
 			.then((res) => {
-				const data = JSON.parse(res.data).map((item, index) => {
+				setRoleData(JSON.parse(res.data));
+				setIsFetching(false);
+			});
+	};
+
+	const fetchAppList = async () => {
+		await axios
+			.post(__API, {
+				Option: "GET APPLICATION",
+			})
+			.then((res) => {
+				const app = JSON.parse(res.data).map((item) => {
 					return {
-						...item,
-						id: index,
+						value: item.appname,
+						label: item.appname,
 					};
 				});
-				setDataUser(data);
-				setIsFetching(false);
+				setAppList(app);
 			});
 	};
 
 	useEffect(() => {
 		fetchData();
+		fetchAppList();
 	}, []);
+
+	const fetchGroupList = async () => {
+		await axios
+			.post(__API, {
+				Option: "GET GROUP",
+				App: {
+					AppName: roleFormData.AppName,
+				},
+			})
+			.then((res) => {
+				const group = JSON.parse(res.data).map((item) => {
+					return {
+						value: item.groupname,
+						label: item.groupname,
+					};
+				});
+				setGroupList(group);
+			});
+	};
+
+	useEffect(() => {
+		if (selectedApp !== undefined) fetchGroupList();
+		if (!isFromTable) {
+			setRoleFormData((prevState) => ({
+				...prevState,
+				GroupName: null,
+			}));
+		}
+	}, [selectedApp, isFromTable]);
+
+	useEffect(() => {
+		if (form) {
+			timerRef.current = setTimeout(
+				() => ref.current.scrollIntoView({ behavior: "smooth" }),
+				100
+			);
+		}
+	}, [form]);
 
 	const selectRowHandler = useCallback((state) => {
 		if (state.selectedCount !== 0) {
-			setUserFormData((prevState) => ({
+			setIsDisabled(true);
+			setIsFromTable(true);
+			setForm(true);
+			setSelectedID(state.selectedRows[0].ID);
+			setSelectedApp(state.selectedRows[0].AppName);
+			setRoleFormData((prevState) => ({
 				...prevState,
-				EmpType: state.selectedRows[0].type,
-				NIK: state.selectedRows[0].nik,
-				Status: statusConvert(state.selectedRows[0].status),
-				Username: state.selectedRows[0].username,
-				Gender: state.selectedRows[0].gender,
+				AppName: state.selectedRows[0].AppName,
+				GroupName: state.selectedRows[0].GroupName,
+				RoleName: state.selectedRows[0].RoleName,
+				RoleDesc: state.selectedRows[0].RoleDesc,
+				RoleType: state.selectedRows[0].RoleType,
+				Status: state.selectedRows[0].Status,
 			}));
 		} else {
-			setUserFormData({
-				EmpType: "Tetap",
-				NIK: "",
-				Username: "",
-				Status: 1,
-				Gender: "",
-			});
+			setForm(false);
+			setIsDisabled(false);
+			setIsFromTable(false);
+			setSelectedID(null);
+			setRoleFormData(initFormState);
 		}
 	}, []);
 
 	// ** Function to handle Modal toggle
 	const handleForm = (e) => {
-		setForm(!form);
-
-		timerRef.current = setTimeout(
-			() => ref.current.scrollIntoView({ behavior: "smooth" }),
-			100
-		);
+		setForm(true);
+		setIsDisabled(false);
 		if (e.hasOwnProperty("target")) setType(e.target.id);
 		else setType("");
 	};
@@ -192,26 +261,30 @@ const UserAllApps = () => {
 	}, []);
 
 	const submitForm = async () => {
-		console.log(userFormData);
+		console.log(roleFormData);
 		await axios
 			.post(__API, {
-				Option: "SUBMIT USER",
+				Option: "SUBMIT ROLE",
 				Type: type,
-				Status: userFormData.Status,
-				User: {
-					EmpType: userFormData.EmpType,
-					NIK: userFormData.NIK,
-					Username: userFormData.Username,
-					Gender: userFormData.Gender,
+				Status: statusConvert(roleFormData.Status),
+				ID: selectedID,
+				App: {
+					AppName: roleFormData.AppName,
+					GroupName: roleFormData.GroupName,
+				},
+				Role: {
+					RoleName: roleFormData.RoleName,
+					RoleDesc: roleFormData.RoleDesc,
+					RoleType: roleFormData.RoleType,
 				},
 			})
 			.then(() => {
 				MySwal.fire({
 					title:
 						type === "add" ? (
-							<p>User berhasil ditambahkan</p>
+							<p>Role baru berhasil ditambahkan</p>
 						) : (
-							<p>Data user berhasil diubah</p>
+							<p>Data role berhasil diubah</p>
 						),
 					didClose: () => fetchData(),
 				});
@@ -220,23 +293,22 @@ const UserAllApps = () => {
 				MySwal.fire({
 					title:
 						type === "add" ? (
-							<p>Gagal menambahkan user</p>
+							<p>Gagal menambahkan role baru</p>
 						) : (
-							<p>Gagal mengubah data user</p>
+							<p>Gagal mengubah data role</p>
 						),
 					didClose: () => fetchData(),
 				});
 			});
 	};
 
-	// ** Function to handle filter
 	const handleFilter = (e) => {
 		const value = e.target.value;
 		let updatedData = [];
 		setSearchValue(value);
 
 		if (value.length) {
-			updatedData = dataUser.filter((item) => {
+			updatedData = appMenuData.filter((item) => {
 				const inc =
 					(item.nik &&
 						item.nik.toLowerCase().includes(value.toLowerCase())) ||
@@ -260,45 +332,6 @@ const UserAllApps = () => {
 		}
 	};
 
-	useEffect(() => {
-		console.log(userFormData);
-	}, [userFormData]);
-
-	const handleType = (e) => {
-		setUserFormData((prevState) => ({
-			...prevState,
-			EmpType: e.target.value,
-		}));
-	};
-
-	const handleStatus = (e) => {
-		setUserFormData((prevState) => ({
-			...prevState,
-			Status: e.target.value,
-		}));
-	};
-
-	const handleNIK = (e) => {
-		setUserFormData((prevState) => ({
-			...prevState,
-			NIK: e.target.value,
-		}));
-	};
-
-	const handleUsername = (e) => {
-		setUserFormData((prevState) => ({
-			...prevState,
-			Username: e.target.value,
-		}));
-	};
-
-	const handleGender = (e) => {
-		setUserFormData((prevState) => ({
-			...prevState,
-			Gender: e.target.value,
-		}));
-	};
-
 	// ** Function to handle Pagination
 	const handlePagination = (page) => {
 		setCurrentPage(page.selected);
@@ -314,7 +347,7 @@ const UserAllApps = () => {
 			pageCount={
 				searchValue.length
 					? Math.ceil(filteredData.length / 7)
-					: Math.ceil(dataUser.length / 7) || 1
+					: Math.ceil(appMenuData.length / 7) || 1
 			}
 			breakLabel="..."
 			pageRangeDisplayed={2}
@@ -338,7 +371,7 @@ const UserAllApps = () => {
 
 		const columnDelimiter = ",";
 		const lineDelimiter = "\n";
-		const keys = Object.keys(dataUser[0]);
+		const keys = Object.keys(appMenuData[0]);
 
 		result = "";
 		result += keys.join(columnDelimiter);
@@ -378,12 +411,9 @@ const UserAllApps = () => {
 
 	return (
 		<Fragment>
-			<UserTable
-				setSelectedRow={selectedMasterRow && setSelectedMasterRow}
-			/>
 			<Card>
 				<CardHeader className="flex-md-row flex-column align-md-items-center align-items-start border-bottom">
-					<CardTitle tag="h4">Master User All Apps</CardTitle>
+					<CardTitle tag="h4">Role per User</CardTitle>
 					<div className="d-flex mt-md-0 mt-1">
 						<UncontrolledButtonDropdown>
 							<DropdownToggle color="secondary" caret outline>
@@ -446,24 +476,7 @@ const UserAllApps = () => {
 						className="d-flex align-items-center justify-content-start"
 						md="6"
 						sm="12"
-					>
-						<Button
-							color={"warning"}
-							className="me-1"
-							id="edit"
-							onClick={handleForm}
-						>
-							Edit
-						</Button>{" "}
-						{"  "}
-						<Button
-							color={"info"}
-							id="details"
-							onClick={handleForm}
-						>
-							Details
-						</Button>
-					</Col>
+					></Col>
 					<Col
 						className="d-flex align-items-center justify-content-end mt-1"
 						md="6"
@@ -497,7 +510,7 @@ const UserAllApps = () => {
 						// paginationComponent={CustomPagination}
 						// paginationDefaultPage={currentPage + 1}
 						selectableRowsComponent={BootstrapCheckbox}
-						data={searchValue.length ? filteredData : dataUser}
+						data={searchValue.length ? filteredData : roleData}
 						progressPending={isFetching}
 						progressComponent={
 							<Spinner className="m-5" color="primary" />
@@ -514,102 +527,205 @@ const UserAllApps = () => {
 			{form ? (
 				<Card>
 					<CardBody>
+						<Button
+							color={isDisabled ? "warning" : "secondary"}
+							className="me-1"
+							id="edit"
+							disabled={!isDisabled}
+							onClick={handleForm}
+						>
+							Edit
+						</Button>
+						<hr />
 						<Form>
-							<Row>
+							<Row className="d-flex justify-content-center align-items-center">
 								<Col md="6" sm="12">
-									<Row className="mb-1">
+									<Row className="mb-1 d-flex justify-content-center align-items-center">
 										<Label sm="3" for="empType">
-											Type
+											Tipe Role
 										</Label>
 										<Col sm="9">
-											<Input
-												type="select"
-												name="empType"
-												id="empType"
-												onChange={handleType}
-												value={userFormData.Type}
-												placeholder="ID"
-											>
-												<option value="Tetap">
-													HRIS
-												</option>
-												<option value="NON_HRIS">
-													NON-HRIS
-												</option>
-											</Input>
+											<Select
+												theme={selectThemeColors}
+												className="react-select"
+												classNamePrefix="select"
+												options={[
+													{
+														value: "Static",
+														label: "Static",
+													},
+													{
+														value: "Hierarki",
+														label: "Hierarki",
+													},
+												]}
+												isClearable={false}
+												isDisabled={isDisabled}
+												onChange={(e) => {
+													setRoleFormData(
+														(prevState) => ({
+															...prevState,
+															RoleType: e.value,
+														})
+													);
+												}}
+												value={{
+													value: roleFormData?.RoleType,
+													label: roleFormData?.RoleType,
+												}}
+											/>
 										</Col>
 									</Row>
 								</Col>
 								<Col md="6" sm="12">
-									<Row className="mb-1">
-										<Label sm="3" for="Status">
+									<Row className="mb-1 d-flex justify-content-center align-items-center">
+										<Label sm="3" for="Gender">
 											Status
 										</Label>
 										<Col sm="9">
-											<Input
-												type="select"
-												name="status"
-												id="Status"
-												onChange={handleStatus}
-												value={userFormData.Status}
-											>
-												<option value="1">
-													Active
-												</option>
-												<option value="0">
-													Inactive
-												</option>
-											</Input>
+											<Select
+												theme={selectThemeColors}
+												className="react-select"
+												classNamePrefix="select"
+												options={[
+													{
+														value: "Active",
+														label: "Active",
+													},
+													{
+														value: "Inactive",
+														label: "Inactive",
+													},
+												]}
+												isClearable={false}
+												isDisabled={isDisabled}
+												onChange={(e) => {
+													setRoleFormData(
+														(prevState) => ({
+															...prevState,
+															Status: e.value,
+														})
+													);
+												}}
+												value={{
+													value: roleFormData?.Status,
+													label: roleFormData?.Status,
+												}}
+											/>
+										</Col>
+									</Row>
+								</Col>
+							</Row>
+							<Row className="d-flex justify-content-center align-items-center">
+								<Col md="6" sm="12">
+									<Row className="mb-1 d-flex justify-content-center align-items-center">
+										<Label sm="3" for="empType">
+											Nama Aplikasi
+										</Label>
+										<Col sm="9">
+											<Select
+												theme={selectThemeColors}
+												className="react-select"
+												classNamePrefix="select"
+												options={appList}
+												isClearable={false}
+												isDisabled={isDisabled}
+												onChange={(e) => {
+													setSelectedApp(e.value);
+													setRoleFormData(
+														(prevState) => ({
+															...prevState,
+															AppName: e.value,
+														})
+													);
+												}}
+												value={{
+													value: roleFormData?.AppName,
+													label: roleFormData?.AppName,
+												}}
+											/>
+										</Col>
+									</Row>
+								</Col>
+								<Col md="6" sm="12">
+									<Row className="mb-1 d-flex justify-content-center align-items-center">
+										<Label sm="3" for="Status">
+											Grup
+										</Label>
+										<Col sm="9">
+											<Select
+												theme={selectThemeColors}
+												className="react-select"
+												classNamePrefix="select"
+												options={groupList}
+												isClearable={false}
+												isDisabled={
+													roleFormData.AppName ===
+														"" || isDisabled
+												}
+												onChange={(e) => {
+													setRoleFormData(
+														(prevState) => ({
+															...prevState,
+															GroupName: e.value,
+														})
+													);
+												}}
+												value={{
+													value: roleFormData?.GroupName,
+													label: roleFormData?.GroupName,
+												}}
+											/>
 										</Col>
 									</Row>
 								</Col>
 							</Row>
 
-							<Row>
+							<Row className="d-flex justify-content-center align-items-center">
 								<Col md="6" sm="12">
-									<Row className="mb-1">
+									<Row className="mb-1 d-flex justify-content-center align-items-center">
 										<Label sm="3" for="NIK">
-											NIK
+											Nama Role
 										</Label>
 										<Col sm="9">
 											<Input
-												name="NIK"
-												id="NIK"
-												value={userFormData.NIK}
-												onChange={handleNIK}
+												name="namaMenu"
+												id="namaMenu"
+												value={roleFormData.RoleName}
+												disabled={isDisabled}
+												onChange={(e) =>
+													setRoleFormData(
+														(prevState) => ({
+															...prevState,
+															RoleName:
+																e.target.value,
+														})
+													)
+												}
 											/>
 										</Col>
 									</Row>
 								</Col>
 								<Col md="6" sm="12">
-									<Row className="mb-1">
-										<Label sm="3" for="Gender">
-											Gender
+									<Row className="mb-1 d-flex justify-content-center align-items-center">
+										<Label sm="3" for="NIK">
+											Deskripsi Role
 										</Label>
 										<Col sm="9">
 											<Input
-												name="Gender"
-												id="Gender"
-												value={userFormData.Gender}
-												onChange={handleGender}
-											/>
-										</Col>
-									</Row>
-								</Col>
-							</Row>
-
-							<Row>
-								<Col>
-									<Row className="mb-1">
-										<Label sm="2" for="userName">
-											Username
-										</Label>
-										<Col sm="10">
-											<Input
-												name="userName"
-												id="userName"
-												value={userFormData.Username}
-												onChange={handleUsername}
+												name="namaMenu"
+												id="namaMenu"
+												value={roleFormData.RoleDesc}
+												disabled={isDisabled}
+												onChange={(e) =>
+													setRoleFormData(
+														(prevState) => ({
+															...prevState,
+															RoleDesc:
+																e.target.value,
+														})
+													)
+												}
 											/>
 										</Col>
 									</Row>
@@ -645,4 +761,4 @@ const UserAllApps = () => {
 	);
 };
 
-export default UserAllApps;
+export default RoleUser;

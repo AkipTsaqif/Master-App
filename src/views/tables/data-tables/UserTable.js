@@ -90,7 +90,7 @@ const UserTable = ({ setSelectedRow }) => {
 		setIsFetching(true);
 		await axios
 			.post(__API, {
-				Option: "GET ALL USER DATA",
+				Option: "GET ALL LEGACY USER DATA",
 			})
 			.then((res) => {
 				const data = JSON.parse(res.data).map((item, index) => {
@@ -180,9 +180,7 @@ const UserTable = ({ setSelectedRow }) => {
 					selectableRowsSingle
 					onSelectedRowsChange={selectRowHandler}
 					columns={columns}
-					paginationPerPage={
-						location.pathname === "/transaction/user" ? 3 : 6
-					}
+					paginationPerPage={3}
 					className="react-dataTable"
 					sortIcon={<ChevronDown size={10} />}
 					persistTableHead

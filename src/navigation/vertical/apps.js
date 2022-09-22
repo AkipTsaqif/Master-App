@@ -49,13 +49,20 @@ export default [
 		id: "mRole",
 		title: "Master Role",
 		icon: <Calendar size={20} />,
-		navLink: "/apps/calendar",
-	},
-	{
-		id: "mRoleUser",
-		title: "Master Role User",
-		icon: <Calendar size={20} />,
-		navLink: "/apps/calendar",
+		children: [
+			{
+				id: "mRoleReg",
+				title: "Register Role",
+				icon: <Circle size={12} />,
+				navLink: "/master/role/role",
+			},
+			{
+				id: "mRoleUser",
+				title: "Role per User",
+				icon: <Circle size={12} />,
+				navLink: "/master/role/user",
+			},
+		],
 	},
 	{
 		id: "mTable",
