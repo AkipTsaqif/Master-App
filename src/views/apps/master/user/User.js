@@ -10,7 +10,7 @@ import {
 import { useLocation } from "react-router-dom";
 
 // ** Utils
-import { statusConvert, __API, formatDate } from "@utils";
+import { statusConvert, __API, formatDate, selectThemeColors } from "@utils";
 import UserTable from "../../../tables/data-tables/UserTable";
 
 // ** Third Party Components
@@ -19,6 +19,7 @@ import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import ReactPaginate from "react-paginate";
 import DataTable from "react-data-table-component";
+import Select from "react-select";
 import {
 	ChevronDown,
 	Share,
@@ -67,6 +68,8 @@ const UserAllApps = () => {
 	const [dataUser, setDataUser] = useState([]);
 	const [type, setType] = useState("");
 	const [isFetching, setIsFetching] = useState(false);
+	const [isDisabled, setIsDisabled] = useState(false);
+	const [refreshTable, setRefreshTable] = useState(false);
 	const [selectedMasterRow, setSelectedMasterRow] = useState({});
 	const [userFormData, setUserFormData] = useState({
 		EmpType: "Tetap",
@@ -152,19 +155,25 @@ const UserAllApps = () => {
 
 	useEffect(() => {
 		fetchData();
-	}, []);
+		console.log("tabel kerefresh");
+	}, [refreshTable]);
 
 	const selectRowHandler = useCallback((state) => {
 		if (state.selectedCount !== 0) {
+			console.log(state.selectedRows[0]);
+			setForm(true);
+			setIsDisabled(true);
 			setUserFormData((prevState) => ({
 				...prevState,
-				EmpType: state.selectedRows[0].type,
-				NIK: state.selectedRows[0].nik,
-				Status: statusConvert(state.selectedRows[0].status),
-				Username: state.selectedRows[0].username,
-				Gender: state.selectedRows[0].gender,
+				EmpType: state.selectedRows[0].EmpType,
+				NIK: state.selectedRows[0].NIK,
+				Status: state.selectedRows[0].Status,
+				Username: state.selectedRows[0].Username,
+				Gender: state.selectedRows[0].Gender,
 			}));
 		} else {
+			setIsDisabled(false);
+			setForm(false);
 			setUserFormData({
 				EmpType: "Tetap",
 				NIK: "",
@@ -177,15 +186,20 @@ const UserAllApps = () => {
 
 	// ** Function to handle Modal toggle
 	const handleForm = (e) => {
-		setForm(!form);
-
-		timerRef.current = setTimeout(
-			() => ref.current.scrollIntoView({ behavior: "smooth" }),
-			100
-		);
+		setForm(true);
+		setIsDisabled(false);
 		if (e.hasOwnProperty("target")) setType(e.target.id);
 		else setType("");
 	};
+
+	useEffect(() => {
+		if (form) {
+			timerRef.current = setTimeout(
+				() => ref.current.scrollIntoView({ behavior: "smooth" }),
+				100
+			);
+		}
+	}, [form]);
 
 	useEffect(() => {
 		return () => clearTimeout(timerRef.current);
@@ -197,7 +211,7 @@ const UserAllApps = () => {
 			.post(__API, {
 				Option: "SUBMIT USER",
 				Type: type,
-				Status: userFormData.Status,
+				Status: statusConvert(userFormData.Status),
 				User: {
 					EmpType: userFormData.EmpType,
 					NIK: userFormData.NIK,
@@ -213,7 +227,7 @@ const UserAllApps = () => {
 						) : (
 							<p>Data user berhasil diubah</p>
 						),
-					didClose: () => fetchData(),
+					didClose: () => setRefreshTable(!refreshTable),
 				});
 			})
 			.catch(() => {
@@ -224,7 +238,7 @@ const UserAllApps = () => {
 						) : (
 							<p>Gagal mengubah data user</p>
 						),
-					didClose: () => fetchData(),
+					didClose: () => setRefreshTable(!refreshTable),
 				});
 			});
 	};
@@ -238,21 +252,12 @@ const UserAllApps = () => {
 		if (value.length) {
 			updatedData = dataUser.filter((item) => {
 				const inc =
-					(item.nik &&
+					(item.NIK &&
 						item.nik.toLowerCase().includes(value.toLowerCase())) ||
-					(item.username &&
+					(item.Username &&
 						item.username
 							.toLowerCase()
-							.includes(value.toLowerCase())) ||
-					(item.userad &&
-						item.userad
-							.toLowerCase()
-							.includes(value.toLowerCase())) ||
-					(item.lob &&
-						item.lob.toLowerCase().includes(value.toLowerCase())) ||
-					(item.email &&
-						item.email.toLowerCase().includes(value.toLowerCase()));
-
+							.includes(value.toLowerCase()));
 				return inc;
 			});
 			setFilteredData(updatedData);
@@ -263,20 +268,6 @@ const UserAllApps = () => {
 	useEffect(() => {
 		console.log(userFormData);
 	}, [userFormData]);
-
-	const handleType = (e) => {
-		setUserFormData((prevState) => ({
-			...prevState,
-			EmpType: e.target.value,
-		}));
-	};
-
-	const handleStatus = (e) => {
-		setUserFormData((prevState) => ({
-			...prevState,
-			Status: e.target.value,
-		}));
-	};
 
 	const handleNIK = (e) => {
 		setUserFormData((prevState) => ({
@@ -380,6 +371,7 @@ const UserAllApps = () => {
 		<Fragment>
 			<UserTable
 				setSelectedRow={selectedMasterRow && setSelectedMasterRow}
+				refreshTable={refreshTable}
 			/>
 			<Card>
 				<CardHeader className="flex-md-row flex-column align-md-items-center align-items-start border-bottom">
@@ -443,28 +435,6 @@ const UserAllApps = () => {
 				</CardHeader>
 				<Row className="justify-content-end mx-0">
 					<Col
-						className="d-flex align-items-center justify-content-start"
-						md="6"
-						sm="12"
-					>
-						<Button
-							color={"warning"}
-							className="me-1"
-							id="edit"
-							onClick={handleForm}
-						>
-							Edit
-						</Button>{" "}
-						{"  "}
-						<Button
-							color={"info"}
-							id="details"
-							onClick={handleForm}
-						>
-							Details
-						</Button>
-					</Col>
-					<Col
 						className="d-flex align-items-center justify-content-end mt-1"
 						md="6"
 						sm="12"
@@ -514,6 +484,16 @@ const UserAllApps = () => {
 			{form ? (
 				<Card>
 					<CardBody>
+						<Button
+							color={isDisabled ? "warning" : "secondary"}
+							className="me-1"
+							id="edit"
+							disabled={!isDisabled}
+							onClick={handleForm}
+						>
+							Edit
+						</Button>
+						<hr />
 						<Form>
 							<Row>
 								<Col md="6" sm="12">
@@ -522,21 +502,35 @@ const UserAllApps = () => {
 											Type
 										</Label>
 										<Col sm="9">
-											<Input
-												type="select"
-												name="empType"
-												id="empType"
-												onChange={handleType}
-												value={userFormData.Type}
-												placeholder="ID"
-											>
-												<option value="Tetap">
-													HRIS
-												</option>
-												<option value="NON_HRIS">
-													NON-HRIS
-												</option>
-											</Input>
+											<Select
+												theme={selectThemeColors}
+												className="react-select"
+												classNamePrefix="select"
+												options={[
+													{
+														value: "Tetap",
+														label: "HRIS",
+													},
+													{
+														value: "NON_HRIS",
+														label: "NON-HRIS",
+													},
+												]}
+												isClearable={false}
+												isDisabled={isDisabled}
+												onChange={(e) => {
+													setUserFormData(
+														(prevState) => ({
+															...prevState,
+															EmpType: e.value,
+														})
+													);
+												}}
+												value={{
+													value: userFormData?.EmpType,
+													label: userFormData?.EmpType,
+												}}
+											/>
 										</Col>
 									</Row>
 								</Col>
@@ -546,20 +540,35 @@ const UserAllApps = () => {
 											Status
 										</Label>
 										<Col sm="9">
-											<Input
-												type="select"
-												name="status"
-												id="Status"
-												onChange={handleStatus}
-												value={userFormData.Status}
-											>
-												<option value="1">
-													Active
-												</option>
-												<option value="0">
-													Inactive
-												</option>
-											</Input>
+											<Select
+												theme={selectThemeColors}
+												className="react-select"
+												classNamePrefix="select"
+												options={[
+													{
+														value: "Active",
+														label: "Active",
+													},
+													{
+														value: "Inactive",
+														label: "Inactive",
+													},
+												]}
+												isClearable={false}
+												isDisabled={isDisabled}
+												onChange={(e) => {
+													setUserFormData(
+														(prevState) => ({
+															...prevState,
+															Status: e.value,
+														})
+													);
+												}}
+												value={{
+													value: userFormData?.Status,
+													label: userFormData?.Status,
+												}}
+											/>
 										</Col>
 									</Row>
 								</Col>
@@ -576,6 +585,7 @@ const UserAllApps = () => {
 												name="NIK"
 												id="NIK"
 												value={userFormData.NIK}
+												disabled={isDisabled}
 												onChange={handleNIK}
 											/>
 										</Col>
@@ -591,6 +601,7 @@ const UserAllApps = () => {
 												name="Gender"
 												id="Gender"
 												value={userFormData.Gender}
+												disabled={isDisabled}
 												onChange={handleGender}
 											/>
 										</Col>
@@ -601,19 +612,21 @@ const UserAllApps = () => {
 							<Row>
 								<Col>
 									<Row className="mb-1">
-										<Label sm="2" for="userName">
+										<Label sm="3" for="userName">
 											Username
 										</Label>
-										<Col sm="10">
+										<Col sm="9">
 											<Input
 												name="userName"
 												id="userName"
 												value={userFormData.Username}
+												disabled={isDisabled}
 												onChange={handleUsername}
 											/>
 										</Col>
 									</Row>
 								</Col>
+								<Col></Col>
 							</Row>
 
 							<Row>

@@ -18,6 +18,7 @@ import withReactContent from "sweetalert2-react-content";
 import ReactPaginate from "react-paginate";
 import DataTable from "react-data-table-component";
 import Select from "react-select";
+import _ from "lodash";
 import {
 	ChevronDown,
 	Share,
@@ -57,11 +58,11 @@ const BootstrapCheckbox = forwardRef((props, ref) => (
 
 const MySwal = withReactContent(Swal);
 const initFormState = {
-	AppName: "",
-	GroupName: "",
+	NIK: "",
+	Username: "",
 	RoleName: "",
 	RoleDesc: "",
-	RoleType: "Static",
+	AppName: "",
 	Status: "Active",
 };
 
@@ -73,13 +74,15 @@ const RoleUser = () => {
 	const [form, setForm] = useState(false);
 	const [type, setType] = useState("");
 	const [appList, setAppList] = useState([]);
-	const [groupList, setGroupList] = useState([]);
+	const [userList, setUserList] = useState({
+		NIK: [],
+		Username: [],
+	});
+	const [roleList, setRoleList] = useState([]);
 	const [roleFormData, setRoleFormData] = useState(initFormState);
-	const [selectedApp, setSelectedApp] = useState();
 	const [selectedID, setSelectedID] = useState();
 	const [isFetching, setIsFetching] = useState(false);
 	const [isDisabled, setIsDisabled] = useState(false);
-	const [isFromTable, setIsFromTable] = useState(false);
 
 	const ref = useRef(null);
 	const timerRef = useRef(null);
@@ -180,39 +183,57 @@ const RoleUser = () => {
 			});
 	};
 
-	useEffect(() => {
-		fetchData();
-		fetchAppList();
-	}, []);
-
-	const fetchGroupList = async () => {
+	const fetchUserList = async () => {
 		await axios
 			.post(__API, {
-				Option: "GET GROUP",
-				App: {
-					AppName: roleFormData.AppName,
-				},
+				Option: "GET ALL NEW MASTER USER DATA",
 			})
 			.then((res) => {
-				const group = JSON.parse(res.data).map((item) => {
+				const user = JSON.parse(res.data);
+				const nik = user.map((item) => {
 					return {
-						value: item.groupname,
-						label: item.groupname,
+						value: item.NIK,
+						label: item.NIK,
+						username: item.Username,
 					};
 				});
-				setGroupList(group);
+				const username = user.map((item) => {
+					return {
+						value: item.Username,
+						label: item.Username,
+						nik: item.NIK,
+					};
+				});
+				setUserList({
+					NIK: nik,
+					Username: username,
+				});
+			});
+	};
+
+	const fetchRoleList = async () => {
+		await axios
+			.post(__API, {
+				Option: "GET ROLE NAME ONLY",
+			})
+			.then((res) => {
+				const role = JSON.parse(res.data).map((item) => {
+					return {
+						value: item.RoleName,
+						label: item.RoleName,
+						desc: item.RoleDesc,
+					};
+				});
+				setRoleList(role);
 			});
 	};
 
 	useEffect(() => {
-		if (selectedApp !== undefined) fetchGroupList();
-		if (!isFromTable) {
-			setRoleFormData((prevState) => ({
-				...prevState,
-				GroupName: null,
-			}));
-		}
-	}, [selectedApp, isFromTable]);
+		fetchData();
+		fetchAppList();
+		fetchUserList();
+		fetchRoleList();
+	}, []);
 
 	useEffect(() => {
 		if (form) {
@@ -226,23 +247,20 @@ const RoleUser = () => {
 	const selectRowHandler = useCallback((state) => {
 		if (state.selectedCount !== 0) {
 			setIsDisabled(true);
-			setIsFromTable(true);
 			setForm(true);
 			setSelectedID(state.selectedRows[0].ID);
-			setSelectedApp(state.selectedRows[0].AppName);
 			setRoleFormData((prevState) => ({
 				...prevState,
 				AppName: state.selectedRows[0].AppName,
-				GroupName: state.selectedRows[0].GroupName,
+				NIK: state.selectedRows[0].NIK,
 				RoleName: state.selectedRows[0].RoleName,
 				RoleDesc: state.selectedRows[0].RoleDesc,
-				RoleType: state.selectedRows[0].RoleType,
+				Username: state.selectedRows[0].Username,
 				Status: state.selectedRows[0].Status,
 			}));
 		} else {
 			setForm(false);
 			setIsDisabled(false);
-			setIsFromTable(false);
 			setSelectedID(null);
 			setRoleFormData(initFormState);
 		}
@@ -268,14 +286,16 @@ const RoleUser = () => {
 				Type: type,
 				Status: statusConvert(roleFormData.Status),
 				ID: selectedID,
+				User: {
+					NIK: roleFormData.NIK,
+					Username: roleFormData.Username,
+				},
 				App: {
 					AppName: roleFormData.AppName,
-					GroupName: roleFormData.GroupName,
 				},
 				Role: {
 					RoleName: roleFormData.RoleName,
 					RoleDesc: roleFormData.RoleDesc,
-					RoleType: roleFormData.RoleType,
 				},
 			})
 			.then(() => {
@@ -538,41 +558,165 @@ const RoleUser = () => {
 						</Button>
 						<hr />
 						<Form>
+							<Row>
+								<h5 className="h5">Cari Pengguna</h5>
+							</Row>
 							<Row className="d-flex justify-content-center align-items-center">
 								<Col md="6" sm="12">
 									<Row className="mb-1 d-flex justify-content-center align-items-center">
 										<Label sm="3" for="empType">
-											Tipe Role
+											NIK
 										</Label>
 										<Col sm="9">
 											<Select
 												theme={selectThemeColors}
 												className="react-select"
 												classNamePrefix="select"
-												options={[
-													{
-														value: "Static",
-														label: "Static",
-													},
-													{
-														value: "Hierarki",
-														label: "Hierarki",
-													},
-												]}
+												options={userList.NIK}
 												isClearable={false}
 												isDisabled={isDisabled}
 												onChange={(e) => {
+													const index = _.findIndex(
+														userList.NIK,
+														{ value: e.value }
+													);
 													setRoleFormData(
 														(prevState) => ({
 															...prevState,
-															RoleType: e.value,
+															NIK: e.value,
+															Username:
+																userList.NIK[
+																	index
+																].username,
 														})
 													);
 												}}
 												value={{
-													value: roleFormData?.RoleType,
-													label: roleFormData?.RoleType,
+													value: roleFormData?.NIK,
+													label: roleFormData?.NIK,
 												}}
+											/>
+										</Col>
+									</Row>
+								</Col>
+								<Col md="6" sm="12">
+									<Row className="mb-1 d-flex justify-content-center align-items-center">
+										<Label sm="3" for="Gender">
+											Username
+										</Label>
+										<Col sm="9">
+											<Select
+												theme={selectThemeColors}
+												className="react-select"
+												classNamePrefix="select"
+												options={userList.Username}
+												isClearable={false}
+												isDisabled={isDisabled}
+												onChange={(e) => {
+													const index = _.findIndex(
+														userList.Username,
+														{ value: e.value }
+													);
+													setRoleFormData(
+														(prevState) => ({
+															...prevState,
+															Username: e.value,
+															NIK: userList
+																.Username[index]
+																.nik,
+														})
+													);
+												}}
+												value={{
+													value: roleFormData?.Username,
+													label: roleFormData?.Username,
+												}}
+											/>
+										</Col>
+									</Row>
+								</Col>
+							</Row>
+							<hr />
+							<Row className="d-flex justify-content-center align-items-center">
+								<Col md="6" sm="12">
+									<Row className="mb-1 d-flex justify-content-center align-items-center">
+										<Label sm="3" for="NIK">
+											Role
+										</Label>
+										<Col sm="9">
+											<Select
+												theme={selectThemeColors}
+												className="react-select"
+												classNamePrefix="select"
+												options={roleList}
+												isClearable={false}
+												isDisabled={isDisabled}
+												onChange={(e) => {
+													const index = _.findIndex(
+														roleList,
+														{ value: e.value }
+													);
+													setRoleFormData(
+														(prevState) => ({
+															...prevState,
+															RoleName: e.value,
+															RoleDesc:
+																roleList[index]
+																	.desc,
+														})
+													);
+												}}
+												value={{
+													value: roleFormData?.RoleName,
+													label: roleFormData?.RoleName,
+												}}
+											/>
+										</Col>
+									</Row>
+								</Col>
+								<Col md="6" sm="12">
+									<Row className="mb-1 d-flex justify-content-center align-items-center">
+										<Label sm="3" for="empType">
+											Nama Aplikasi
+										</Label>
+										<Col sm="9">
+											<Select
+												theme={selectThemeColors}
+												className="react-select"
+												classNamePrefix="select"
+												options={appList}
+												isClearable={false}
+												isDisabled={isDisabled}
+												onChange={(e) => {
+													setSelectedApp(e.value);
+													setRoleFormData(
+														(prevState) => ({
+															...prevState,
+															AppName: e.value,
+														})
+													);
+												}}
+												value={{
+													value: roleFormData?.AppName,
+													label: roleFormData?.AppName,
+												}}
+											/>
+										</Col>
+									</Row>
+								</Col>
+							</Row>
+							<Row className="d-flex justify-content-center align-items-center">
+								<Col md="6" sm="12">
+									<Row className="mb-1 d-flex justify-content-center align-items-center">
+										<Label sm="3" for="NIK">
+											Deskripsi Role
+										</Label>
+										<Col sm="9">
+											<Input
+												name="namaMenu"
+												id="namaMenu"
+												value={roleFormData.RoleDesc}
+												disabled={isDisabled}
 											/>
 										</Col>
 									</Row>
@@ -611,121 +755,6 @@ const RoleUser = () => {
 													value: roleFormData?.Status,
 													label: roleFormData?.Status,
 												}}
-											/>
-										</Col>
-									</Row>
-								</Col>
-							</Row>
-							<Row className="d-flex justify-content-center align-items-center">
-								<Col md="6" sm="12">
-									<Row className="mb-1 d-flex justify-content-center align-items-center">
-										<Label sm="3" for="empType">
-											Nama Aplikasi
-										</Label>
-										<Col sm="9">
-											<Select
-												theme={selectThemeColors}
-												className="react-select"
-												classNamePrefix="select"
-												options={appList}
-												isClearable={false}
-												isDisabled={isDisabled}
-												onChange={(e) => {
-													setSelectedApp(e.value);
-													setRoleFormData(
-														(prevState) => ({
-															...prevState,
-															AppName: e.value,
-														})
-													);
-												}}
-												value={{
-													value: roleFormData?.AppName,
-													label: roleFormData?.AppName,
-												}}
-											/>
-										</Col>
-									</Row>
-								</Col>
-								<Col md="6" sm="12">
-									<Row className="mb-1 d-flex justify-content-center align-items-center">
-										<Label sm="3" for="Status">
-											Grup
-										</Label>
-										<Col sm="9">
-											<Select
-												theme={selectThemeColors}
-												className="react-select"
-												classNamePrefix="select"
-												options={groupList}
-												isClearable={false}
-												isDisabled={
-													roleFormData.AppName ===
-														"" || isDisabled
-												}
-												onChange={(e) => {
-													setRoleFormData(
-														(prevState) => ({
-															...prevState,
-															GroupName: e.value,
-														})
-													);
-												}}
-												value={{
-													value: roleFormData?.GroupName,
-													label: roleFormData?.GroupName,
-												}}
-											/>
-										</Col>
-									</Row>
-								</Col>
-							</Row>
-
-							<Row className="d-flex justify-content-center align-items-center">
-								<Col md="6" sm="12">
-									<Row className="mb-1 d-flex justify-content-center align-items-center">
-										<Label sm="3" for="NIK">
-											Nama Role
-										</Label>
-										<Col sm="9">
-											<Input
-												name="namaMenu"
-												id="namaMenu"
-												value={roleFormData.RoleName}
-												disabled={isDisabled}
-												onChange={(e) =>
-													setRoleFormData(
-														(prevState) => ({
-															...prevState,
-															RoleName:
-																e.target.value,
-														})
-													)
-												}
-											/>
-										</Col>
-									</Row>
-								</Col>
-								<Col md="6" sm="12">
-									<Row className="mb-1 d-flex justify-content-center align-items-center">
-										<Label sm="3" for="NIK">
-											Deskripsi Role
-										</Label>
-										<Col sm="9">
-											<Input
-												name="namaMenu"
-												id="namaMenu"
-												value={roleFormData.RoleDesc}
-												disabled={isDisabled}
-												onChange={(e) =>
-													setRoleFormData(
-														(prevState) => ({
-															...prevState,
-															RoleDesc:
-																e.target.value,
-														})
-													)
-												}
 											/>
 										</Col>
 									</Row>

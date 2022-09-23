@@ -28,7 +28,7 @@ const BootstrapCheckbox = forwardRef((props, ref) => (
 	</div>
 ));
 
-const UserTable = ({ setSelectedRow }) => {
+const UserTable = ({ setSelectedRow, refreshTable }) => {
 	const [isFetching, setIsFetching] = useState(false);
 	const [dataUser, setDataUser] = useState([]);
 	const [searchValue, setSearchValue] = useState("");
@@ -106,7 +106,7 @@ const UserTable = ({ setSelectedRow }) => {
 
 	useEffect(() => {
 		fetchData();
-	}, []);
+	}, [refreshTable]);
 
 	const selectRowHandler = useCallback((state) => {
 		setSelectedRow(state.selectedRows[0]);
